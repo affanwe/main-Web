@@ -1,0 +1,286 @@
+
+> antigravity-tutorial@0.0.0 lint
+> eslint .
+
+
+E:\Antigravity tutorial\scratch\cleanup.js
+  71:5  error  'process' is not defined  no-undef
+  74:5  error  'process' is not defined  no-undef
+
+E:\Antigravity tutorial\scratch\read_settings.js
+  28:1  error  'process' is not defined  no-undef
+
+E:\Antigravity tutorial\scratch\update-settings.js
+  29:5  error  'process' is not defined  no-undef
+  32:5  error  'process' is not defined  no-undef
+
+E:\Antigravity tutorial\src\App.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+E:\Antigravity tutorial\src\pages\Dashboard.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+E:\Antigravity tutorial\src\pages\FreeShares.jsx
+   1:8   error    'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+   4:21  error    'Gift' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+   4:34  error    'CheckCircle' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+   4:47  error    'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  30:5   error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  28 |
+  29 |   useEffect(() => {
+> 30 |     loadData();
+     |     ^^^^^^^^ `loadData` accessed before it is declared
+  31 |   }, [selectedMonth, selectedYear]);
+  32 |
+  33 |   const loadData = async () => {
+
+   31 |   }, [selectedMonth, selectedYear]);
+   32 |
+>  33 |   const loadData = async () => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  34 |     setLoading(true);
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  35 |     try {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 103 |     setLoading(false);
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 104 |   };
+      | ^^^^^ `loadData` is declared here
+  105 |
+  106 |   const openPaymentModal = (investor, expectedProfit, paid) => {
+  107 |     setActivePayment({  react-hooks/immutability
+  31:6   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+E:\Antigravity tutorial\src\pages\Funds.jsx
+   1:8   error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+   3:10  error  'Wallet' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  13:5   error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  11 |
+  12 |   useEffect(() => {
+> 13 |     loadData();
+     |     ^^^^^^^^ `loadData` accessed before it is declared
+  14 |   }, []);
+  15 |
+  16 |   const loadData = async () => {
+
+  14 |   }, []);
+  15 |
+> 16 |   const loadData = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |     const f = await getFunds();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |     if (f) setFunds(f);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |     const tx = await getTransactions();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     setTransactions(tx.sort((a,b) => new Date(b.date) - new Date(a.date)));
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |   };
+     | ^^^^^ `loadData` is declared here
+  22 |
+  23 |   const handleDeduct = async (e) => {
+  24 |     e.preventDefault();  react-hooks/immutability
+
+E:\Antigravity tutorial\src\pages\History.jsx
+   1:8   error  'React' is defined but never used  no-unused-vars
+  65:14  error  'e' is defined but never used      no-unused-vars
+
+E:\Antigravity tutorial\src\pages\InvestorProfile.jsx
+    1:8   error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+  173:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  171 |   useEffect(() => {
+  172 |     if (!transferData.toInvestorId) {
+> 173 |       setRecipientName('');
+      |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  174 |       setRecipientError('');
+  175 |       return;
+  176 |     }  react-hooks/set-state-in-effect
+  193:16  error  'err' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+
+E:\Antigravity tutorial\src\pages\Investors.jsx
+   1:8  error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+  49:5  error  Error: Cannot access variable before it is declared
+
+`loadInvestors` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  47 |
+  48 |   useEffect(() => {
+> 49 |     loadInvestors();
+     |     ^^^^^^^^^^^^^ `loadInvestors` accessed before it is declared
+  50 |   }, []);
+  51 |
+  52 |   const loadInvestors = async () => {
+
+  50 |   }, []);
+  51 |
+> 52 |   const loadInvestors = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |     const inv = await getInvestors();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 54 |     setInvestors(inv);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 55 |   };
+     | ^^^^^ `loadInvestors` is declared here
+  56 |
+  57 |   const calculateActivationDate = (joinDateStr) => {
+  58 |     const d = new Date(joinDateStr);  react-hooks/immutability
+
+E:\Antigravity tutorial\src\pages\Login.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+E:\Antigravity tutorial\src\pages\PnL.jsx
+   1:8  error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  15:5  error  Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  13 |
+  14 |   useEffect(() => {
+> 15 |     loadData();
+     |     ^^^^^^^^ `loadData` accessed before it is declared
+  16 |   }, []);
+  17 |
+  18 |   const loadData = async () => {
+
+  16 |   }, []);
+  17 |
+> 18 |   const loadData = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |     const data = await getPnlRecords();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |     setRecords(data);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |     
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     const invs = await getInvestors();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |     setInvestors(invs);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 24 |   };
+     | ^^^^^ `loadData` is declared here
+  25 |
+  26 |   useEffect(() => {
+  27 |     if (!month) {  react-hooks/immutability
+  28:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  26 |   useEffect(() => {
+  27 |     if (!month) {
+> 28 |       setTotalUltraActive(0);
+     |       ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  29 |       return;
+  30 |     }
+  31 |     let count = 0;                                                             react-hooks/set-state-in-effect
+
+E:\Antigravity tutorial\src\pages\Profile.jsx
+   1:8  error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  10:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   8 |     const userStr = localStorage.getItem('woora_user');
+   9 |     if (userStr) {
+> 10 |       setUser(JSON.parse(userStr));
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  11 |     }
+  12 |   }, []);
+  13 |  react-hooks/set-state-in-effect
+
+E:\Antigravity tutorial\src\pages\Referrals.jsx
+   1:8   error  'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+  10:5   error  Error: Cannot access variable before it is declared
+
+`loadRanking` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+   8 |
+   9 |   useEffect(() => {
+> 10 |     loadRanking();
+     |     ^^^^^^^^^^^ `loadRanking` accessed before it is declared
+  11 |   }, []);
+  12 |
+  13 |   const loadRanking = async () => {
+
+  11 |   }, []);
+  12 |
+> 13 |   const loadRanking = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 14 |     const allInvestors = await getInvestors();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 15 |     
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |     setRanking(rankingArray);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |   };
+     | ^^^^^ `loadRanking` is declared here
+  42 |
+  43 |   const awardFreeShare = async (referrerId, name, awardedSoFar) => {
+  44 |     try {  react-hooks/immutability
+  43:51  error  'awardedSoFar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+
+E:\Antigravity tutorial\src\pages\Returns.jsx
+   1:8   error    'React' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+   3:17  error    'CheckCircle' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+   3:30  error    'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+   3:55  error    'Calculator' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+   3:67  error    'Calendar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  28:5   error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  26 |
+  27 |   useEffect(() => {
+> 28 |     loadData();
+     |     ^^^^^^^^ `loadData` accessed before it is declared
+  29 |   }, [selectedMonth, selectedYear]);
+  30 |
+  31 |   const loadData = async () => {
+
+   29 |   }, [selectedMonth, selectedYear]);
+   30 |
+>  31 |   const loadData = async () => {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  32 |     setLoading(true);
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  33 |     try {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 134 |     setLoading(false);
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 135 |   };
+      | ^^^^^ `loadData` is declared here
+  136 |
+  137 |   const openPaymentModal = (investor, expectedProfit, paid) => {
+  138 |     setActivePayment({  react-hooks/immutability
+  29:6   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+E:\Antigravity tutorial\src\pages\Team.jsx
+  1:8   error  'React' is defined but never used  no-unused-vars
+  3:28  error  'User' is defined but never used   no-unused-vars
+  3:47  error  'Hash' is defined but never used   no-unused-vars
+
+✖ 42 problems (40 errors, 2 warnings)
+
