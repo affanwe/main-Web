@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getShareRequests, approveShareRequest, rejectShareRequest } from '../../src/db';
 import LocomotiveText from '../../src/components/LocomotiveText';
-import { CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
 const Requests = () => {
   const [requests, setRequests] = useState([]);
@@ -13,12 +13,6 @@ const Requests = () => {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('woora_user');
-    if (userStr) setUser(JSON.parse(userStr));
-    loadRequests();
-  }, []);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -30,6 +24,12 @@ const Requests = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('woora_user');
+    if (userStr) setUser(JSON.parse(userStr));
+    loadRequests();
+  }, []);
 
   const handleApprove = async (req) => {
     if (!confirm(`Approve ${req.sharesCount} shares for ${req.investorName} (ID: ${req.investorId})?\n\nAmount: ৳${parseInt(req.amount || 0).toLocaleString()}\nPayment: ${req.paymentMethod}\nTrx ID: ${req.trxId || 'N/A'}`)) return;
