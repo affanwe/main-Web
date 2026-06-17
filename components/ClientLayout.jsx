@@ -9,8 +9,7 @@ import {
   Bell, User, MessageSquare, FileCheck
 } from 'lucide-react';
 import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
-import { db } from '../src/firebase';
-import { collection, query, orderBy, onSnapshot, limit, where } from 'firebase/firestore';
+import { supabase } from '../src/supabase';
 import LocomotiveText from '../src/components/LocomotiveText';
 
 const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount }) => {
@@ -111,36 +110,30 @@ export default function ClientLayout({ children }) {
 
   useEffect(() => {
     if (!mounted) return;
-
-    const q = query(
-      collection(db, 'notifications'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = [];
-      snapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() });
-      });
-      setNotifications(list);
-    }, (err) => {
-      console.error("Failed to subscribe to notifications:", err);
-    });
-    return () => unsubscribe();
+    // Notifications are not yet implemented in Supabase, keep empty
+    setNotifications([]);
   }, [mounted]);
 
   useEffect(() => {
     if (!mounted) return;
-    const q = query(
-      collection(db, 'shareRequests'),
-      where('status', '==', 'Pending')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPendingRequestCount(snapshot.size);
-    }, (err) => {
-      console.error("Failed to subscribe to share requests:", err);
-    });
-    return () => unsubscribe();
+
+    const fetchPending = async () => {
+      const { count, error } = await supabase
+        .from('share_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Pending');
+      if (!error) setPendingRequestCount(count || 0);
+    };
+    fetchPending();
+
+    const channel = supabase
+      .channel('admin-share-requests')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'share_requests'
+      }, () => fetchPending())
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, [mounted]);
 
   useEffect(() => {
