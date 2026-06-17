@@ -3,21 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy, 
-  LogOut, Search, Menu, X, UserPlus, History as HistoryIcon, 
-  Bell, User, MessageSquare 
+import {
+  Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy,
+  LogOut, Search, Menu, X, UserPlus, History as HistoryIcon,
+  Bell, User, MessageSquare, FileCheck
 } from 'lucide-react';
 import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
 import { db } from '../src/firebase';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, where } from 'firebase/firestore';
 import LocomotiveText from '../src/components/LocomotiveText';
 
-const Sidebar = ({ isOpen, setOpen, user }) => {
+const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount }) => {
   const pathname = usePathname();
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Investors', path: '/investors', icon: Users },
+    { name: 'Share Requests', path: '/requests', icon: FileCheck, badge: pendingRequestCount || 0 },
     { name: 'Company PnL', path: '/pnl', icon: Calculator },
     { name: 'Funds Details', path: '/funds', icon: Wallet },
     { name: 'Return Investment', path: '/returns', icon: Repeat },
@@ -49,14 +50,20 @@ const Sidebar = ({ isOpen, setOpen, user }) => {
         {navItems.map(item => {
           const Icon = item.icon;
           return (
-            <Link 
-              key={item.path} 
-              href={item.path} 
+            <Link
+              key={item.path}
+              href={item.path}
               className={`nav-item nav-item-locomotive ${pathname === item.path ? 'active' : ''}`}
               onClick={handleNavClick}
+              style={{ position: 'relative' }}
             >
               <Icon size={20} />
               <LocomotiveText text={item.name} />
+              {item.badge > 0 && (
+                <span style={{ marginLeft: 'auto', backgroundColor: '#EF4444', color: '#FFF', fontSize: '10px', fontWeight: 700, borderRadius: '10px', minWidth: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' }}>
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -91,6 +98,7 @@ export default function ClientLayout({ children }) {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [processingRequest, setProcessingRequest] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -117,6 +125,20 @@ export default function ClientLayout({ children }) {
       setNotifications(list);
     }, (err) => {
       console.error("Failed to subscribe to notifications:", err);
+    });
+    return () => unsubscribe();
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const q = query(
+      collection(db, 'shareRequests'),
+      where('status', '==', 'Pending')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setPendingRequestCount(snapshot.size);
+    }, (err) => {
+      console.error("Failed to subscribe to share requests:", err);
     });
     return () => unsubscribe();
   }, [mounted]);
@@ -216,7 +238,7 @@ export default function ClientLayout({ children }) {
 
   return (
     <div className="app-container">
-      <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} user={user} />
+      <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} user={user} pendingRequestCount={pendingRequestCount} />
       
       <main className={`main-content ${!sidebarOpen ? 'expanded' : ''}`}>
         <header className="topbar no-print">

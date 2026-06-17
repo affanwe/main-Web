@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, runTransaction } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy, runTransaction } from 'firebase/firestore';
 
 const ensureSystemDoc = async () => {
   const systemRef = doc(db, 'system', 'funds');
@@ -716,6 +716,21 @@ export const getNextInvestorId = async () => {
   return nextId.toString();
 };
 
+export const getShareRequests = async () => {
+  const querySnapshot = await getDocs(collection(db, "shareRequests"));
+  const list = [];
+  querySnapshot.forEach((docSnap) => {
+    list.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  // Sort: Pending first, then by dateRequested descending
+  list.sort((a, b) => {
+    if (a.status === 'Pending' && b.status !== 'Pending') return -1;
+    if (a.status !== 'Pending' && b.status === 'Pending') return 1;
+    return new Date(b.dateRequested || 0) - new Date(a.dateRequested || 0);
+  });
+  return list;
+};
+
 export const approveShareRequest = async (requestId, adminId) => {
   const reqRef = doc(db, "shareRequests", requestId);
   const reqSnap = await getDoc(reqRef);
@@ -736,14 +751,28 @@ export const approveShareRequest = async (requestId, adminId) => {
   
   const txId = await addShareToInvestor(reqData.investorId, newShare);
   if (!txId) throw new Error("Failed to add shares to investor");
-  
+
+  // Update system funds: 40% company, 20% reserve (40% is investor profit share)
+  const totalAmount = parseInt(reqData.amount, 10) || 0;
+  const companyShare = totalAmount * 0.4;
+  const reserveShare = totalAmount * 0.2;
+
+  await ensureSystemDoc();
+  const systemRef = doc(db, 'system', 'funds');
+  const fundsSnap = await getDoc(systemRef);
+  const currentFunds = fundsSnap.data();
+  await updateDoc(systemRef, {
+    companyFund: (currentFunds.companyFund || 0) + companyShare,
+    reserveFund: (currentFunds.reserveFund || 0) + reserveShare
+  });
+
   await updateDoc(reqRef, {
     status: 'Approved',
     approvedBy: adminId,
     approvedAt: new Date().toISOString(),
     txId: txId
   });
-  
+
   return txId;
 };
 
