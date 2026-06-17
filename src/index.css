@@ -163,6 +163,7 @@ body {
 
 /* Custom Cursor Elements */
 .custom-cursor-dot {
+  display: none !important; /* Hide dot since native cursor is visible */
   width: 6px;
   height: 6px;
   margin-left: -3px;
@@ -211,19 +212,9 @@ body {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
 }
 
-/* On desktop, hide native cursor when custom cursor is enabled */
+/* On desktop, keep native cursor visible and let the custom ring act as a trail */
 @media (min-width: 769px) {
-  body.has-custom-cursor,
-  body.has-custom-cursor a,
-  body.has-custom-cursor button,
-  body.has-custom-cursor input,
-  body.has-custom-cursor select,
-  body.has-custom-cursor textarea,
-  body.has-custom-cursor .card,
-  body.has-custom-cursor tr,
-  body.has-custom-cursor .nav-item {
-    cursor: none !important;
-  }
+  /* Native cursor is preserved */
 }
 
 /* Locomotive 3D & Hover Effects */
