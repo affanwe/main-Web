@@ -219,3 +219,11 @@
     padding: 16px;
   }
 }
+
+.notification-item:hover {
+  background-color: var(--color-surface-hover) !important;
+}
+
+.notification-bell-btn:hover {
+  background-color: var(--color-surface-hover);
+}

@@ -1,0 +1,462 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { 
+  Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy, 
+  LogOut, Search, Menu, X, UserPlus, History as HistoryIcon, 
+  Bell, User, MessageSquare 
+} from 'lucide-react';
+import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
+import { db } from '../src/firebase';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import LocomotiveText from '../src/components/LocomotiveText';
+
+const Sidebar = ({ isOpen, setOpen, user }) => {
+  const pathname = usePathname();
+  const navItems = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Investors', path: '/investors', icon: Users },
+    { name: 'Company PnL', path: '/pnl', icon: Calculator },
+    { name: 'Funds Details', path: '/funds', icon: Wallet },
+    { name: 'Return Investment', path: '/returns', icon: Repeat },
+    { name: 'Referral Ranking', path: '/referrals', icon: Trophy },
+    { name: 'History', path: '/history', icon: HistoryIcon },
+  ];
+
+  if (user?.role === 'Founder') {
+    navItems.push({ name: 'Team Management', path: '/team', icon: UserPlus });
+  }
+
+  const handleNavClick = () => {
+    if (window.innerWidth <= 768) {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <div className="sidebar-header">
+        <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }} onClick={handleNavClick}>
+          <h2 className="text-locomotive"><LocomotiveText text="WOORA" /></h2>
+        </Link>
+        <button type="button" className="close-btn md-hidden" onClick={() => setOpen(false)}>
+          <X size={24} />
+        </button>
+      </div>
+      <nav className="sidebar-nav">
+        {navItems.map(item => {
+          const Icon = item.icon;
+          return (
+            <Link 
+              key={item.path} 
+              href={item.path} 
+              className={`nav-item nav-item-locomotive ${pathname === item.path ? 'active' : ''}`}
+              onClick={handleNavClick}
+            >
+              <Icon size={20} />
+              <LocomotiveText text={item.name} />
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="sidebar-footer">
+        <button className="nav-item nav-item-locomotive text-red" onClick={() => {
+          localStorage.removeItem('woora_logged_in');
+          localStorage.removeItem('woora_user');
+          localStorage.removeItem('woora_last_active');
+          window.location.reload();
+        }}>
+          <LogOut size={20} />
+          <LocomotiveText text="Logout" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default function ClientLayout({ children }) {
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState(null);
+
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [processingRequest, setProcessingRequest] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setSidebarOpen(window.innerWidth > 768);
+    const userStr = localStorage.getItem('woora_user');
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const q = query(
+      collection(db, 'notifications'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      setNotifications(list);
+    }, (err) => {
+      console.error("Failed to subscribe to notifications:", err);
+    });
+    return () => unsubscribe();
+  }, [mounted]);
+
+  useEffect(() => {
+    if (mounted) {
+      const isAuth = localStorage.getItem('woora_logged_in') === 'true';
+      if (!isAuth && pathname !== '/login') {
+        router.push('/login');
+      } else if (isAuth && pathname === '/login') {
+        router.push('/');
+      }
+    }
+  }, [mounted, pathname, router]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
+    if (isMobile) return;
+
+    const dot = document.createElement('div');
+    const trail = document.createElement('div');
+    dot.className = 'custom-cursor-dot';
+    trail.className = 'custom-cursor-trail';
+    document.body.appendChild(dot);
+    document.body.appendChild(trail);
+    document.body.classList.add('has-custom-cursor');
+
+    let mouseX = 0;
+    let mouseY = 0;
+
+    const handleMouseMove = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+    };
+
+    let trailX = 0;
+    let trailY = 0;
+    const animateTrail = () => {
+      trailX += (mouseX - trailX) * 0.15;
+      trailY += (mouseY - trailY) * 0.15;
+      trail.style.transform = `translate3d(${trailX}px, ${trailY}px, 0)`;
+      requestAnimationFrame(animateTrail);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    const animId = requestAnimationFrame(animateTrail);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animId);
+      if (document.body.contains(dot)) document.body.removeChild(dot);
+      if (document.body.contains(trail)) document.body.removeChild(trail);
+      document.body.classList.remove('has-custom-cursor');
+    };
+  }, [mounted]);
+
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-white)' }}>
+        Loading Woora...
+      </div>
+    );
+  }
+
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    const queryStr = searchQuery.trim().toLowerCase();
+    const investors = await getInvestors();
+    
+    let found = investors.find(i => i.id.toString().toLowerCase() === queryStr);
+    
+    if (!found) {
+      found = investors.find(i => i.mobile.includes(queryStr));
+    }
+    
+    if (!found) {
+      found = investors.find(i => i.name.toLowerCase().includes(queryStr));
+    }
+
+    if (found) {
+      router.push(`/investor/${found.id}`);
+      setSearchQuery('');
+    } else {
+      alert("No investor found matching your search.");
+    }
+  };
+
+  return (
+    <div className="app-container">
+      <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} user={user} />
+      
+      <main className={`main-content ${!sidebarOpen ? 'expanded' : ''}`}>
+        <header className="topbar no-print">
+          <button type="button" className="menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu size={24} />
+          </button>
+          
+          <div className="search-bar">
+            <Search size={20} className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search ID, Name, Mobile..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+              className="input-field"
+            />
+          </div>
+
+          <div className="notification-wrapper" style={{ position: 'relative', marginLeft: 'auto', marginRight: '16px' }}>
+            <button 
+              type="button" 
+              className="notification-bell-btn" 
+              onClick={() => setShowNotifications(!showNotifications)}
+              style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', borderRadius: '50%', transition: 'background-color 0.2s' }}
+            >
+              <Bell size={22} color={unreadCount > 0 ? "var(--color-primary)" : "currentColor"} />
+              {unreadCount > 0 && (
+                <span className="notification-badge" style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: '#EF4444', color: '#FFF', fontSize: '9px', fontWeight: 'bold', borderRadius: '50%', minWidth: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', border: '2px solid var(--color-surface)' }}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="notification-dropdown card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', width: '320px', maxHeight: '400px', overflowY: 'auto', zIndex: 1000, display: 'flex', flexDirection: 'column', padding: 0, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)', border: '1px solid var(--color-border)' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-hover)' }}>
+                  <h4 style={{ margin: 0, color: 'var(--color-text-white)', fontSize: '14px', fontWeight: 600 }}>Notifications</h4>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await markAllNotificationsAsRead();
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }} 
+                      style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div 
+                        key={notif.id} 
+                        onClick={async () => {
+                          setShowNotifications(false);
+                          if (!notif.read) {
+                            await markNotificationAsRead(notif.id);
+                          }
+                          if (notif.type === 'registration' && notif.payload?.investorId) {
+                            router.push(`/investor/${notif.payload.investorId}`);
+                          } else if (notif.type === 'buy_request' && notif.payload) {
+                            setSelectedRequest({
+                              id: notif.payload.requestId || notif.id,
+                              notificationId: notif.id,
+                              ...notif.payload
+                            });
+                            setShowRejectInput(false);
+                            setRejectReason('');
+                          }
+                        }}
+                        style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', backgroundColor: notif.read ? 'transparent' : 'rgba(59, 130, 246, 0.05)', display: 'flex', gap: '12px', transition: 'background-color 0.2s' }}
+                        className="notification-item"
+                      >
+                        <div style={{ marginTop: '2px', color: notif.type === 'buy_request' ? 'var(--color-primary)' : '#10B981' }}>
+                          {notif.type === 'buy_request' ? <MessageSquare size={16} /> : <User size={16} />}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '12px', fontWeight: notif.read ? 500 : 600, color: notif.read ? 'var(--color-text-muted)' : 'var(--color-text-white)' }}>{notif.title}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px', lineHeight: '1.4' }}>{notif.message}</div>
+                          <div style={{ fontSize: '9px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                            {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        {!notif.read && (
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', alignSelf: 'center' }} />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="user-profile" onClick={() => router.push('/profile')} style={{ cursor: 'pointer', marginLeft: 0 }}>
+            <div className="avatar">{user ? user.name.charAt(0).toUpperCase() : 'U'}</div>
+            <span className="md-hidden-down">{user ? user.name : 'User'}</span>
+          </div>
+        </header>
+        
+        <div className="page-content">
+          {children}
+        </div>
+      </main>
+
+      {/* Share Request Approval Modal */}
+      {selectedRequest && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '480px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <MessageSquare color="var(--color-primary)" /> Share Purchase Request
+              </h2>
+              <button 
+                onClick={() => setSelectedRequest(null)} 
+                style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer' }}
+                disabled={processingRequest}
+              >
+                <X size={20}/>
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px' }}>
+              <p style={{ margin: '0 0 8px 0', color: 'var(--color-text-white)' }}>
+                Investor: <strong>{selectedRequest.investorName} (ID: {selectedRequest.investorId})</strong>
+              </p>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Requested Shares: <strong>{selectedRequest.sharesCount} Shares</strong>
+              </p>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Total Payment: <strong>৳{parseInt(selectedRequest.amount || 0).toLocaleString()}</strong>
+              </p>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Payment Method: <strong>{selectedRequest.paymentMethod}</strong>
+              </p>
+              {selectedRequest.trxId && (
+                <p style={{ margin: '0 0 8px 0', color: 'var(--color-primary)' }}>
+                  Transaction ID / Ref: <strong>{selectedRequest.trxId}</strong>
+                </p>
+              )}
+              <p style={{ margin: '0', color: 'var(--color-text-muted)' }}>
+                Date Requested: {selectedRequest.dateRequested ? new Date(selectedRequest.dateRequested).toLocaleString() : 'N/A'}
+              </p>
+            </div>
+
+            {showRejectInput ? (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Reason for Rejection</label>
+                <textarea
+                  className="input-field"
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="Enter reason..."
+                  style={{ width: '100%', height: '80px', padding: '8px 12px', fontSize: '13px', resize: 'none' }}
+                  required
+                />
+              </div>
+            ) : null}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              {showRejectInput ? (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowRejectInput(false)}
+                    disabled={processingRequest}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    style={{ backgroundColor: '#EF4444', color: '#FFF' }}
+                    onClick={async () => {
+                      if (!rejectReason.trim()) {
+                        alert("Please provide a rejection reason.");
+                        return;
+                      }
+                      setProcessingRequest(true);
+                      try {
+                        await rejectShareRequest(selectedRequest.id, user?.id || 'System', rejectReason);
+                        await markNotificationAsRead(selectedRequest.notificationId);
+                        alert("Request rejected successfully.");
+                        setSelectedRequest(null);
+                      } catch (err) {
+                        alert("Failed to reject request: " + err.message);
+                      }
+                      setProcessingRequest(false);
+                    }}
+                    disabled={processingRequest}
+                  >
+                    Confirm Reject
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowRejectInput(true)}
+                    disabled={processingRequest}
+                  >
+                    Reject Request
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary"
+                    onClick={async () => {
+                      setProcessingRequest(true);
+                      try {
+                        await approveShareRequest(selectedRequest.id, user?.id || 'System');
+                        await markNotificationAsRead(selectedRequest.notificationId);
+                        alert("Request approved successfully! Shares added to investor.");
+                        setSelectedRequest(null);
+                      } catch (err) {
+                        alert("Failed to approve request: " + err.message);
+                      }
+                      setProcessingRequest(false);
+                    }}
+                    disabled={processingRequest}
+                  >
+                    Approve & Add Shares
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getFunds, deductFund, getTransactions } from '../db';
+import { getFunds, deductFund, getTransactions } from '../../src/db';
 import { Wallet, ArrowDownCircle } from 'lucide-react';
 
 const Funds = () => {
@@ -38,7 +40,6 @@ const Funds = () => {
   useEffect(() => {
     loadData();
   }, []);
-
 
   return (
     <div>

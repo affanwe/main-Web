@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getPnlRecords, addPnLRecord, getInvestors, getShareStatus } from '../db';
+import { getPnlRecords, addPnLRecord, getInvestors, getShareStatus } from '../../src/db';
 import { Calculator } from 'lucide-react';
 
 const PnL = () => {
@@ -9,7 +11,7 @@ const PnL = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [revenue, setRevenue] = useState(0);
   const [cost, setCost] = useState(0);
-  const [totalUltraActive, setTotalUltraActive] = useState(0);
+  const [totalActive, setTotalActive] = useState(0);
 
   const loadData = async () => {
     const data = await getPnlRecords();
@@ -21,8 +23,7 @@ const PnL = () => {
 
   useEffect(() => {
     if (!month) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTotalUltraActive(0);
+      setTotalActive(0);
       return;
     }
     let count = 0;
@@ -31,13 +32,13 @@ const PnL = () => {
         inv.investments.forEach(share => {
           if (share.status === 'Closed') return;
           const blockStatus = getShareStatus(share.joiningDate, parseInt(year, 10), month);
-          if (blockStatus === 'Ultra Active') {
+          if (blockStatus === 'Active') {
             count += parseInt(share.shares, 10) || 0;
           }
         });
       }
     });
-    setTotalUltraActive(count);
+    setTotalActive(count);
   }, [month, year, investors]);
 
   const handleSubmit = async (e) => {
@@ -49,7 +50,8 @@ const PnL = () => {
       year,
       revenue: parseFloat(revenue),
       cost: parseFloat(cost),
-      totalUltraActiveShares: totalUltraActive
+      totalActiveShares: totalActive,
+      totalUltraActiveShares: totalActive
     };
 
     await addPnLRecord(record);
@@ -62,12 +64,11 @@ const PnL = () => {
   const invShare = netProfit * 0.4;
   const compShare = netProfit * 0.4;
   const resShare = netProfit * 0.2;
-  const profitPerShare = totalUltraActive > 0 ? (invShare / totalUltraActive) : 0;
+  const profitPerShare = totalActive > 0 ? (invShare / totalActive) : 0;
 
   useEffect(() => {
     loadData();
   }, []);
-
 
   return (
     <div>
@@ -113,7 +114,7 @@ const PnL = () => {
             </div>
             
             <div style={{ padding: '16px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid var(--color-primary)', marginTop: '8px' }}>
-              <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--color-text-white)' }}><span>Total Ultra Active Shares:</span> <strong>{totalUltraActive}</strong></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--color-text-white)' }}><span>Total Active Shares:</span> <strong>{totalActive}</strong></p>
               <p style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-primary)' }}><span>Dividend Per Share:</span> <strong>৳{profitPerShare.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></p>
             </div>
 

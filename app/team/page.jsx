@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getUsers, addUser, updateUser, deleteUser } from '../db';
+import { getUsers, addUser, updateUser, deleteUser } from '../../src/db';
 import { UserPlus, Shield, User, Mail, Phone, Hash, Edit2, Trash2 } from 'lucide-react';
 
 const Team = () => {

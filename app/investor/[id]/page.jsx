@@ -1,7 +1,10 @@
+"use client";
+
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getInvestors, deleteInvestor, addShareToInvestor, sellSharesFromInvestor, getShareStatus, transferShares } from '../db';
-import { sendReceiptEmail } from '../email';
+import { useParams, useRouter } from 'next/navigation';
+import { getInvestors, deleteInvestor, addShareToInvestor, sellSharesFromInvestor, getShareStatus, transferShares } from '../../../src/db';
+import { sendReceiptEmail } from '../../../src/email';
+import { User, Phone, Mail, MapPin, CreditCard, Calendar, Activity, CheckCircle, Clock, Trash2, Plus, X, DollarSign } from 'lucide-react';
 
 const getDynamicInvestorStatus = (inv) => {
   if (!inv) return 'Pending';
@@ -12,38 +15,33 @@ const getDynamicInvestorStatus = (inv) => {
   const currentMonthName = months[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear();
   
-  let hasUltraActive = false;
   let hasActive = false;
   let hasPending = false;
   
   inv.investments.forEach(block => {
     if (block.status === 'Closed') return;
     const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName);
-    if (blockStatus === 'Ultra Active') {
-      hasUltraActive = true;
-    } else if (blockStatus === 'Active') {
+    if (blockStatus === 'Active') {
       hasActive = true;
     } else if (blockStatus === 'Pending') {
       hasPending = true;
     }
   });
   
-  if (hasUltraActive) return 'Ultra Active';
   if (hasActive) return 'Active';
   if (hasPending) return 'Pending';
   return 'Closed';
 };
-import { User, Phone, Mail, MapPin, CreditCard, Calendar, Activity, CheckCircle, Clock, Trash2, Plus, X, DollarSign } from 'lucide-react';
 
 const InvestorProfile = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const params = useParams();
+  const id = params.id;
+  const router = useRouter();
   const [investor, setInvestor] = useState(null);
 
   useEffect(() => {
     const fetchInv = async () => {
       const investors = await getInvestors();
-      // Find investor by exact ID match
       const inv = investors.find(i => i.id.toString() === id.toString());
       setInvestor(inv);
     };
@@ -95,7 +93,7 @@ const InvestorProfile = () => {
   };
 
   const [showSellModal, setShowSellModal] = useState(false);
-  const [sellStep, setSellStep] = useState('input'); // 'input' | 'confirm'
+  const [sellStep, setSellStep] = useState('input');
   const [sellData, setSellData] = useState({ sharesToSell: 1, editedBy: '', maxShares: 1 });
 
   const openSellModal = () => {
@@ -132,7 +130,6 @@ const InvestorProfile = () => {
       const authorizerId = userObj ? userObj.id : 'System';
       const txId = await sellSharesFromInvestor(investor.id, qty, authorizerId);
       
-      // Send Sell Receipt Email
       if (investor.email) {
         sendReceiptEmail({
           to_email: investor.email,
@@ -157,8 +154,9 @@ const InvestorProfile = () => {
       alert('Error: ' + err.message);
     }
   };
+
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [transferStep, setTransferStep] = useState('input'); // 'input' | 'confirm'
+  const [transferStep, setTransferStep] = useState('input');
   const [transferData, setTransferData] = useState({
     toInvestorId: '',
     blockIndex: 0,
@@ -170,7 +168,6 @@ const InvestorProfile = () => {
 
   useEffect(() => {
     if (!transferData.toInvestorId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecipientName('');
       setRecipientError('');
       return;
@@ -181,16 +178,14 @@ const InvestorProfile = () => {
         const found = investors.find(i => i.id.toString() === transferData.toInvestorId.toString());
         if (found) {
           if (found.id.toString() === investor.id.toString()) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRecipientName('');
+            setRecipientName('');
             setRecipientError('Cannot transfer shares to oneself');
           } else {
             setRecipientName(found.name);
             setRecipientError('');
           }
         } else {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRecipientName('');
+          setRecipientName('');
           setRecipientError('Investor ID not found');
         }
       } catch (err) {
@@ -216,8 +211,7 @@ const InvestorProfile = () => {
       authorizedBy: authorizerId
     });
     setTransferStep('input');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-      setRecipientName('');
+    setRecipientName('');
     setRecipientError('');
     setShowTransferModal(true);
   };
@@ -255,7 +249,6 @@ const InvestorProfile = () => {
         authorizerId
       );
       
-      // Send Transfer Out Receipt to Sender
       if (investor.email) {
         sendReceiptEmail({
           to_email: investor.email,
@@ -274,7 +267,6 @@ const InvestorProfile = () => {
         }).catch(err => console.error("Error sending transfer out receipt email:", err));
       }
 
-      // Send Transfer In Receipt to Recipient
       if (result.toEmail) {
         sendReceiptEmail({
           to_email: result.toEmail,
@@ -301,12 +293,13 @@ const InvestorProfile = () => {
       alert('Error transferring shares: ' + err.message);
     }
   };
+
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this investor? All their data and shares will be permanently removed, and their amount will be deducted from the total.")) {
       try {
         await deleteInvestor(investor.id, investor.amount);
         alert("Investor deleted successfully.");
-        navigate('/investors');
+        router.push('/investors');
       } catch (err) {
         alert("Failed to delete investor: " + err.message);
       }
@@ -318,7 +311,7 @@ const InvestorProfile = () => {
       <div style={{ textAlign: 'center', margin: '40px auto', color: 'var(--color-text-white)' }}>
         <h2>Investor Not Found</h2>
         <p style={{ color: 'var(--color-text-muted)', marginTop: '8px' }}>No investor found with ID: {id}</p>
-        <button className="btn btn-primary" style={{ marginTop: '24px' }} onClick={() => navigate('/investors')}>Back to Investors</button>
+        <button className="btn btn-primary" style={{ marginTop: '24px' }} onClick={() => router.push('/investors')}>Back to Investors</button>
       </div>
     );
   }
@@ -326,7 +319,7 @@ const InvestorProfile = () => {
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <button className="btn btn-secondary" onClick={() => navigate('/investors')}>&larr; Back</button>
+        <button className="btn btn-secondary" onClick={() => router.push('/investors')}>&larr; Back</button>
         <h1 className="page-title" style={{ margin: 0 }}>Investor Profile: {investor.name}</h1>
       </div>
 
@@ -451,7 +444,6 @@ const InvestorProfile = () => {
 
       </div>
       
-      {/* Add New Share Modal */}
       {showAddShare && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="card" style={{ width: '100%', maxWidth: '500px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
@@ -473,7 +465,7 @@ const InvestorProfile = () => {
                 <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-muted)' }}>Status</label>
                 <select className="input-field" value={newShare.status} onChange={e => setNewShare({...newShare, status: e.target.value})}>
                   <option value="Pending">Pending</option>
-                  <option value="Ultra Active">Ultra Active</option>
+                  <option value="Active">Active</option>
                   <option value="Closed">Closed</option>
                 </select>
               </div>
@@ -500,12 +492,10 @@ const InvestorProfile = () => {
         </div>
       )}
 
-      {/* Sell Share Modal */}
       {showSellModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ width: '100%', maxWidth: '460px', backgroundColor: 'var(--color-surface)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '16px', padding: '28px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
             
-            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -521,7 +511,6 @@ const InvestorProfile = () => {
 
             {sellStep === 'input' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Info Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div style={{ padding: '12px', backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.2)', textAlign: 'center' }}>
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Total Shares</p>
@@ -533,11 +522,10 @@ const InvestorProfile = () => {
                   </div>
                 </div>
 
-                {/* Quantity Selector */}
                 <div>
                   <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Shares to Sell <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {sellData.maxShares})</span></label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
-                    <button type="button" onClick={() => changeSellQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }} onMouseEnter={e => e.target.style.background='rgba(245,158,11,0.2)'} onMouseLeave={e => e.target.style.background='var(--color-bg)'}>
+                    <button type="button" onClick={() => changeSellQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
                       −
                     </button>
                     <input
@@ -551,13 +539,12 @@ const InvestorProfile = () => {
                       }}
                       style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', fontWeight: 'bold', outline: 'none', padding: '8px 0' }}
                     />
-                    <button type="button" onClick={() => changeSellQty(1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }} onMouseEnter={e => e.target.style.background='rgba(245,158,11,0.2)'} onMouseLeave={e => e.target.style.background='var(--color-bg)'}>
+                    <button type="button" onClick={() => changeSellQty(1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
                       +
                     </button>
                   </div>
                 </div>
 
-                {/* Refund Preview */}
                 <div style={{ padding: '14px', backgroundColor: 'rgba(245,158,11,0.08)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.25)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>Refund Amount</span>
@@ -566,7 +553,6 @@ const InvestorProfile = () => {
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '11px', margin: 0 }}>Will be deducted from 20% Reserve Fund</p>
                 </div>
 
-                {/* Buttons */}
                 <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
                   <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowSellModal(false)}>Cancel</button>
                   <button
@@ -582,7 +568,6 @@ const InvestorProfile = () => {
                 </div>
               </div>
             ) : (
-              /* Confirmation Step */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ padding: '20px', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
@@ -616,171 +601,165 @@ const InvestorProfile = () => {
           </div>
         </div>
       )}
-        {/* Transfer Share Modal */}
-        {showTransferModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-            <div style={{ width: '100%', maxWidth: '460px', backgroundColor: 'var(--color-surface)', border: '1px solid rgba(59,130,246,0.4)', borderRadius: '16px', padding: '28px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
-              
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Activity size={20} color="var(--color-primary)" />
-                  </div>
-                  <div>
-                    <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Transfer Shares</h2>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', margin: 0 }}>From: {investor.name} — ID: {investor.id}</p>
-                  </div>
+
+      {showTransferModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ width: '100%', maxWidth: '460px', backgroundColor: 'var(--color-surface)', border: '1px solid rgba(59,130,246,0.4)', borderRadius: '16px', padding: '28px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Activity size={20} color="var(--color-primary)" />
                 </div>
-                <button onClick={() => setShowTransferModal(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '4px' }}><X size={22}/></button>
+                <div>
+                  <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Transfer Shares</h2>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', margin: 0 }}>From: {investor.name} — ID: {investor.id}</p>
+                </div>
               </div>
-
-              {transferStep === 'input' ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {/* Select Block */}
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Select Share Block to Transfer</label>
-                    <select
-                      className="input-field"
-                      value={transferData.blockIndex}
-                      onChange={e => {
-                        const idx = parseInt(e.target.value, 10);
-                        setTransferData(prev => ({
-                          ...prev,
-                          blockIndex: idx,
-                          sharesToTransfer: 1
-                        }));
-                      }}
-                    >
-                      {investor.investments && investor.investments.map((block, idx) => {
-                        const currentDate = new Date();
-                        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                        const currentMonthName = months[currentDate.getMonth()];
-                        const currentYear = currentDate.getFullYear();
-                        const status = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
-                        return (
-                          <option key={idx} value={idx}>
-                            Block {idx + 1}: {block.shares} Shares (Status: {status}, Joined: {block.joiningDate})
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-
-                  {/* Recipient Input */}
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Recipient Investor ID</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={transferData.toInvestorId}
-                      onChange={e => setTransferData({ ...transferData, toInvestorId: e.target.value })}
-                      placeholder="Enter Recipient ID"
-                    />
-                    {recipientName && (
-                      <p style={{ color: '#10B981', fontSize: '12px', marginTop: '6px', margin: 0 }}>✓ Recipient: <strong>{recipientName}</strong></p>
-                    )}
-                    {recipientError && (
-                      <p style={{ color: '#EF4444', fontSize: '12px', marginTop: '6px', margin: 0 }}>✗ {recipientError}</p>
-                    )}
-                  </div>
-
-                  {/* Quantity Selector */}
-                  {(() => {
-                    const block = investor.investments[transferData.blockIndex];
-                    const maxShares = block ? parseInt(block.shares, 10) : 0;
-                    return (
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Shares to Transfer <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {maxShares})</span></label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
-                          <button type="button" onClick={() => changeTransferQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            min="1"
-                            max={maxShares}
-                            value={transferData.sharesToTransfer}
-                            onChange={e => {
-                              const val = parseInt(e.target.value, 10);
-                              if (!isNaN(val) && val >= 1 && val <= maxShares) setTransferData({...transferData, sharesToTransfer: val});
-                            }}
-                            style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', fontWeight: 'bold', outline: 'none', padding: '8px 0' }}
-                          />
-                          <button type="button" onClick={() => changeTransferQty(1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
-                    <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowTransferModal(false)}>Cancel</button>
-                    <button
-                      type="button"
-                      style={{ flex: 2, padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--color-primary)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                      onClick={() => {
-                        const block = investor.investments[transferData.blockIndex];
-                        const maxShares = block ? parseInt(block.shares, 10) : 0;
-                        if (!transferData.toInvestorId.trim()) { alert('Please enter Recipient Investor ID.'); return; }
-                        if (recipientError) { alert(recipientError); return; }
-                        if (transferData.sharesToTransfer <= 0 || transferData.sharesToTransfer > maxShares) { alert('Invalid share quantity.'); return; }
-                        setTransferStep('confirm');
-                      }}
-                    >
-                      Continue Transfer
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Confirmation Step */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ padding: '20px', backgroundColor: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔄</div>
-                    <h3 style={{ color: 'var(--color-primary)', marginBottom: '8px', fontSize: '16px' }}>Confirm Share Transfer</h3>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
-                      You are transferring <strong style={{ color: 'var(--color-text-white)' }}>{transferData.sharesToTransfer} shares</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong> to <strong style={{ color: 'var(--color-text-white)' }}>{recipientName} (ID: {transferData.toInvestorId})</strong>.
-                    </p>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '8px', fontStyle: 'italic' }}>
-                      Note: The original joining date and share aging lifecycle progress will be preserved on the recipient's profile.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {[
-                      ['Shares to Transfer', `${transferData.sharesToTransfer} shares`],
-                      ['From Investor', `${investor.name} (ID: ${investor.id})`],
-                      ['Recipient Investor', `${recipientName} (ID: ${transferData.toInvestorId})`],
-                      ['Original Date', investor.investments[transferData.blockIndex].joiningDate],
-                      ['Authorized By', transferData.authorizedBy]
-                    ].map(([label, value]) => (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>{label}</span>
-                        <strong style={{ color: 'var(--color-text-white)', fontSize: '13px' }}>{value}</strong>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setTransferStep('input')}>&larr; Go Back</button>
-                    <button
-                      type="button"
-                      style={{ flex: 2, padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--color-primary)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}
-                      onClick={handleTransferShares}
-                    >
-                      ✓ Yes, Confirm Transfer
-                    </button>
-                  </div>
-                </div>
-              )}
+              <button onClick={() => setShowTransferModal(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '4px' }}><X size={22}/></button>
             </div>
+
+            {transferStep === 'input' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Select Share Block to Transfer</label>
+                  <select
+                    className="input-field"
+                    value={transferData.blockIndex}
+                    onChange={e => {
+                      const idx = parseInt(e.target.value, 10);
+                      setTransferData(prev => ({
+                        ...prev,
+                        blockIndex: idx,
+                        sharesToTransfer: 1
+                      }));
+                    }}
+                  >
+                    {investor.investments && investor.investments.map((block, idx) => {
+                      const currentDate = new Date();
+                      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                      const currentMonthName = months[currentDate.getMonth()];
+                      const currentYear = currentDate.getFullYear();
+                      const status = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
+                      return (
+                        <option key={idx} value={idx}>
+                          Block {idx + 1}: {block.shares} Shares (Status: {status}, Joined: {block.joiningDate})
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Recipient Investor ID</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={transferData.toInvestorId}
+                    onChange={e => setTransferData({ ...transferData, toInvestorId: e.target.value })}
+                    placeholder="Enter Recipient ID"
+                  />
+                  {recipientName && (
+                    <p style={{ color: '#10B981', fontSize: '12px', marginTop: '6px', margin: 0 }}>✓ Recipient: <strong>{recipientName}</strong></p>
+                  )}
+                  {recipientError && (
+                    <p style={{ color: '#EF4444', fontSize: '12px', marginTop: '6px', margin: 0 }}>✗ {recipientError}</p>
+                  )}
+                </div>
+
+                {(() => {
+                  const block = investor.investments[transferData.blockIndex];
+                  const maxShares = block ? parseInt(block.shares, 10) : 0;
+                  return (
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Shares to Transfer <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {maxShares})</span></label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
+                        <button type="button" onClick={() => changeTransferQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          max={maxShares}
+                          value={transferData.sharesToTransfer}
+                          onChange={e => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val) && val >= 1 && val <= maxShares) setTransferData({...transferData, sharesToTransfer: val});
+                          }}
+                          style={{ flex: 1, textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', fontWeight: 'bold', outline: 'none', padding: '8px 0' }}
+                        />
+                        <button type="button" onClick={() => changeTransferQty(1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowTransferModal(false)}>Cancel</button>
+                  <button
+                    type="button"
+                    style={{ flex: 2, padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--color-primary)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    onClick={() => {
+                      const block = investor.investments[transferData.blockIndex];
+                      const maxShares = block ? parseInt(block.shares, 10) : 0;
+                      if (!transferData.toInvestorId.trim()) { alert('Please enter Recipient Investor ID.'); return; }
+                      if (recipientError) { alert(recipientError); return; }
+                      if (transferData.sharesToTransfer <= 0 || transferData.sharesToTransfer > maxShares) { alert('Invalid share quantity.'); return; }
+                      setTransferStep('confirm');
+                    }}
+                  >
+                    Continue Transfer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ padding: '20px', backgroundColor: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔄</div>
+                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '8px', fontSize: '16px' }}>Confirm Share Transfer</h3>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
+                    You are transferring <strong style={{ color: 'var(--color-text-white)' }}>{transferData.sharesToTransfer} shares</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong> to <strong style={{ color: 'var(--color-text-white)' }}>{recipientName} (ID: {transferData.toInvestorId})</strong>.
+                  </p>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '8px', fontStyle: 'italic' }}>
+                    Note: The original joining date and share aging lifecycle progress will be preserved on the recipient's profile.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    ['Shares to Transfer', `${transferData.sharesToTransfer} shares`],
+                    ['From Investor', `${investor.name} (ID: ${investor.id})`],
+                    ['Recipient Investor', `${recipientName} (ID: ${transferData.toInvestorId})`],
+                    ['Original Date', investor.investments[transferData.blockIndex].joiningDate],
+                    ['Authorized By', transferData.authorizedBy]
+                  ].map(([label, value]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>{label}</span>
+                      <strong style={{ color: 'var(--color-text-white)', fontSize: '13px' }}>{value}</strong>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setTransferStep('input')}>&larr; Go Back</button>
+                  <button
+                    type="button"
+                    style={{ flex: 2, padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: 'var(--color-primary)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}
+                    onClick={handleTransferShares}
+                  >
+                    ✓ Yes, Confirm Transfer
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    );
-  };
+        </div>
+      )}
+    </div>
+  );
+};
 
 const InfoItem = ({ icon, label, value }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getInvestors, getReturnPayments, getPnlRecords, recordPayout, getShareStatus } from '../db';
+import { getInvestors, getReturnPayments, getPnlRecords, recordPayout, getShareStatus } from '../../src/db';
 import { Coins, CheckCircle, Clock, AlertTriangle, X, Calculator, Calendar } from 'lucide-react';
 
 const MONTHS = [
@@ -17,7 +19,6 @@ const Returns = () => {
   const [pnlExists, setPnlExists] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Modal State
   const [showPayModal, setShowPayModal] = useState(false);
   const [activePayment, setActivePayment] = useState(null);
   const [payAmount, setPayAmount] = useState('');
@@ -27,7 +28,6 @@ const Returns = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch PnL records to get the profit per share for selected month/year
       const pnlRecords = await getPnlRecords();
       const pnlRecord = pnlRecords.find(r => r.month === selectedMonth && parseInt(r.year, 10) === parseInt(selectedYear, 10));
       
@@ -35,17 +35,16 @@ const Returns = () => {
       if (pnlRecord) {
         const netProfit = pnlRecord.revenue - pnlRecord.cost;
         const invShare = netProfit * 0.4;
-        pps = pnlRecord.totalUltraActiveShares > 0 ? (invShare / pnlRecord.totalUltraActiveShares) : 0;
+        const totalSharesCount = pnlRecord.totalActiveShares !== undefined ? pnlRecord.totalActiveShares : (pnlRecord.totalUltraActiveShares || 0);
+        pps = totalSharesCount > 0 ? (invShare / totalSharesCount) : 0;
         setPnlExists(true);
       } else {
         setPnlExists(false);
       }
       setProfitPerShare(pps);
 
-      // 2. Fetch all investors
       const allInvestors = await getInvestors();
 
-      // 3. Fetch all payments for this month/year
       const paymentsList = await getReturnPayments(selectedYear, selectedMonth);
       const payMap = {};
       paymentsList.forEach(p => {
@@ -53,10 +52,8 @@ const Returns = () => {
       });
       setPaymentsMap(payMap);
 
-      // 4. Calculate status & ultra active shares count for each investor in the selected month
       const processed = allInvestors.map(inv => {
         let totalShares = 0;
-        let ultraActiveShares = 0;
         let activeShares = 0;
         let pendingShares = 0;
         const blocksInfo = [];
@@ -66,10 +63,8 @@ const Returns = () => {
             const blockShares = parseInt(block.shares, 10) || 0;
             totalShares += blockShares;
 
-            // Determine status for this block in the selected month
             let status = getShareStatus(block.joiningDate, selectedYear, selectedMonth);
 
-            // If the share was transferred, the recipient is only eligible starting the month AFTER the transfer
             if (block.transferDate) {
               const transDate = new Date(block.transferDate);
               const transYear = transDate.getFullYear();
@@ -80,28 +75,17 @@ const Returns = () => {
               
               const diffTransfer = (parseInt(selectedYear, 10) - transYear) * 12 + (targetMonthIndex - transMonth);
               if (diffTransfer <= 0) {
-                status = 'Pending'; // Override to Pending in transfer month
+                status = 'Pending';
               }
             }
-            
-            // Calculate ultra activation date: 1st day of the 3rd month (joining month + 2, day 1)
-            const joinDate = new Date(block.joiningDate);
-            const targetDateObj = new Date(joinDate.getFullYear(), joinDate.getMonth() + 2, 1);
-            const y = targetDateObj.getFullYear();
-            const m = String(targetDateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(targetDateObj.getDate()).padStart(2, '0');
-            const ultraDateStr = `${d}/${m}/${y}`;
 
             blocksInfo.push({
               shares: blockShares,
               joiningDate: block.joiningDate,
-              ultraActivationDate: ultraDateStr,
               status
             });
 
-            if (status === 'Ultra Active') {
-              ultraActiveShares += blockShares;
-            } else if (status === 'Active') {
+            if (status === 'Active') {
               activeShares += blockShares;
             } else {
               pendingShares += blockShares;
@@ -112,16 +96,13 @@ const Returns = () => {
         return {
           ...inv,
           totalShares,
-          ultraActiveShares,
           activeShares,
           pendingShares,
           blocksInfo
         };
       });
 
-      // Filter out investors who do not have any ultra active shares in the selected month
-      const activeInMonth = processed.filter(inv => inv.ultraActiveShares > 0);
-
+      const activeInMonth = processed.filter(inv => inv.activeShares > 0);
       setInvestorsList(activeInMonth);
     } catch (err) {
       console.error(err);
@@ -134,7 +115,7 @@ const Returns = () => {
     setActivePayment({
       investorId: investor.id,
       name: investor.name,
-      ultraShares: investor.ultraActiveShares,
+      activeShares: investor.activeShares,
       expectedProfit,
       paid,
       due: expectedProfit - paid
@@ -189,14 +170,12 @@ const Returns = () => {
     loadData();
   }, [selectedMonth, selectedYear]);
 
-
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Investment Return Queue</h1>
       </div>
 
-      {/* Selector & Info Panel */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -236,7 +215,6 @@ const Returns = () => {
         )}
       </div>
 
-      {/* Main Table */}
       <div className="card" style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
           <thead>
@@ -244,7 +222,7 @@ const Returns = () => {
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>ID</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Name</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Shares Info</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Ultra Activation Date</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Shares Status Details</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Payment (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Paid (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Due (৳)</th>
@@ -263,7 +241,7 @@ const Returns = () => {
               </tr>
             ) : (
               investorsList.map(inv => {
-                const expectedProfit = inv.ultraActiveShares * profitPerShare;
+                const expectedProfit = inv.activeShares * profitPerShare;
                 const payRecord = paymentsMap[inv.id];
                 const paid = payRecord ? payRecord.paidAmount : 0;
                 const due = Math.max(0, expectedProfit - paid);
@@ -277,7 +255,6 @@ const Returns = () => {
                   paymentStatus = 'Partially Paid';
                 }
 
-                // Render dynamic status classes
                 let statusBg = 'rgba(239, 68, 68, 0.1)', statusColor = '#EF4444';
                 if (paymentStatus === 'Paid') {
                   statusBg = 'rgba(16, 185, 129, 0.1)';
@@ -302,7 +279,6 @@ const Returns = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span style={{ color: 'var(--color-text-white)', fontWeight: 600 }}>Total: {inv.totalShares} Shares</span>
                         <div style={{ display: 'flex', gap: '6px', fontSize: '11px', flexWrap: 'wrap' }}>
-                          <span style={{ color: '#10B981', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.08)' }}>Ultra Active: {inv.ultraActiveShares}</span>
                           <span style={{ color: '#F59E0B', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.08)' }}>Active: {inv.activeShares}</span>
                           <span style={{ color: '#EF4444', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)' }}>Pending: {inv.pendingShares}</span>
                         </div>
@@ -312,7 +288,7 @@ const Returns = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
                         {inv.blocksInfo.map((b, idx) => (
                           <div key={idx}>
-                            {b.shares} Sh. → <strong style={{ color: 'var(--color-text-white)' }}>{b.ultraActivationDate}</strong>
+                            {b.shares} Sh. → <strong style={{ color: 'var(--color-text-white)' }}>{b.status}</strong>
                           </div>
                         ))}
                       </div>
@@ -336,7 +312,7 @@ const Returns = () => {
                         </button>
                       ) : (
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-                          {paymentStatus === 'N/A' ? 'No Ultra active shares yet' : 'Fully Paid'}
+                          {paymentStatus === 'N/A' ? 'No active shares yet' : 'Fully Paid'}
                         </span>
                       )}
                     </td>
@@ -348,7 +324,6 @@ const Returns = () => {
         </table>
       </div>
 
-      {/* Pay Modal */}
       {showPayModal && activePayment && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="card" style={{ width: '100%', maxWidth: '450px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
@@ -361,7 +336,7 @@ const Returns = () => {
 
             <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px' }}>
               <p style={{ margin: '0 0 6px 0', color: 'var(--color-text-white)' }}>Investor: <strong>{activePayment.name} (ID: {activePayment.investorId})</strong></p>
-              <p style={{ margin: '0 0 6px 0' }}>Eligible Shares: <strong>{activePayment.ultraShares} Ultra Active Shares</strong></p>
+              <p style={{ margin: '0 0 6px 0' }}>Eligible Shares: <strong>{activePayment.activeShares} Active Shares</strong></p>
               <p style={{ margin: '0 0 6px 0' }}>Expected Return Profit: <strong>৳{activePayment.expectedProfit.toLocaleString()}</strong></p>
               <p style={{ margin: '0 0 6px 0', color: '#10B981' }}>Paid So Far: <strong>৳{activePayment.paid.toLocaleString()}</strong></p>
               <p style={{ margin: '0', color: '#EF4444' }}>Remaining Due: <strong>৳{activePayment.due.toLocaleString()}</strong></p>

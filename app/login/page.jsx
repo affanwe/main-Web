@@ -1,8 +1,10 @@
+"use client";
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../db';
+import { useRouter } from 'next/navigation';
+import { loginUser } from '../../src/db';
 import { Shield } from 'lucide-react';
-import { sendOtpEmail } from '../email';
+import { sendOtpEmail } from '../../src/email';
 
 const Login = () => {
   const [step, setStep] = useState(1);
@@ -10,7 +12,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [actualOtp, setActualOtp] = useState('');
 
@@ -49,7 +51,7 @@ const Login = () => {
         localStorage.setItem('woora_user', tempUser);
         localStorage.removeItem('woora_user_temp');
       }
-      navigate('/');
+      router.push('/');
     } else {
       setError('Invalid verification code. Please try again.');
     }

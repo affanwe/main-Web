@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, runTransaction } from 'firebase/firestore';
 
 const ensureSystemDoc = async () => {
   const systemRef = doc(db, 'system', 'funds');
@@ -89,20 +89,7 @@ export const deleteUser = async (id) => {
 
 export const addInvestor = async (investor) => {
   if (!investor.id) {
-    let nextId = 1001;
-    const investors = await getInvestors();
-    if (investors.length > 0) {
-      let maxId = 1000;
-      investors.forEach(inv => {
-        let numStr = inv.id.toString().replace(/\D/g, '');
-        let num = parseInt(numStr, 10);
-        if (!isNaN(num) && num > maxId) {
-          maxId = num;
-        }
-      });
-      nextId = maxId + 1;
-    }
-    investor.id = nextId.toString();
+    investor.id = await getNextInvestorId();
   }
   
   // Set defaults for purely profile creation
@@ -503,10 +490,8 @@ export const getShareStatus = (joiningDateStr, targetYear, targetMonthName) => {
   
   if (diffMonths <= 0) {
     return 'Pending';
-  } else if (diffMonths === 1) {
-    return 'Active';
   } else {
-    return 'Ultra Active';
+    return 'Active';
   }
 };
 
@@ -692,6 +677,106 @@ export const getEmailJsSettings = async () => {
 export const saveEmailJsSettings = async (settings) => {
   const docRef = doc(db, 'system', 'emailjs');
   await setDoc(docRef, settings, { merge: true });
+};
+
+export const getNextInvestorId = async () => {
+  const counterRef = doc(db, 'system', 'counters');
+  let nextId = 1001;
+  
+  try {
+    await runTransaction(db, async (transaction) => {
+      const counterSnap = await transaction.get(counterRef);
+      if (!counterSnap.exists()) {
+        transaction.set(counterRef, { nextInvestorId: 1002 });
+        nextId = 1001;
+      } else {
+        const currentId = counterSnap.data().nextInvestorId || 1001;
+        transaction.update(counterRef, { nextInvestorId: currentId + 1 });
+        nextId = currentId;
+      }
+    });
+  } catch (e) {
+    console.error("Transaction failed to get next investor ID, falling back to max ID search:", e);
+    const querySnapshot = await getDocs(collection(db, "investors"));
+    let maxId = 1000;
+    querySnapshot.forEach((doc) => {
+      let numStr = doc.data().id ? doc.data().id.toString().replace(/\D/g, '') : '';
+      let num = parseInt(numStr, 10);
+      if (!isNaN(num) && num > maxId) {
+        maxId = num;
+      }
+    });
+    nextId = maxId + 1;
+    try {
+      await setDoc(counterRef, { nextInvestorId: nextId + 1 });
+    } catch (err) {
+      console.error("Failed to write fallback nextInvestorId", err);
+    }
+  }
+  return nextId.toString();
+};
+
+export const approveShareRequest = async (requestId, adminId) => {
+  const reqRef = doc(db, "shareRequests", requestId);
+  const reqSnap = await getDoc(reqRef);
+  if (!reqSnap.exists()) throw new Error("Request not found");
+  
+  const reqData = reqSnap.data();
+  if (reqData.status !== 'Pending') throw new Error("Request is already processed");
+  
+  const newShare = {
+    shares: parseInt(reqData.sharesCount, 10),
+    amount: parseInt(reqData.amount, 10),
+    joiningDate: new Date(reqData.dateRequested || new Date()).toISOString().split('T')[0],
+    activationDate: '',
+    status: 'Pending',
+    paymentMethod: reqData.paymentMethod || 'Cash',
+    trxId: reqData.trxId || ''
+  };
+  
+  const txId = await addShareToInvestor(reqData.investorId, newShare);
+  if (!txId) throw new Error("Failed to add shares to investor");
+  
+  await updateDoc(reqRef, {
+    status: 'Approved',
+    approvedBy: adminId,
+    approvedAt: new Date().toISOString(),
+    txId: txId
+  });
+  
+  return txId;
+};
+
+export const rejectShareRequest = async (requestId, adminId, reason) => {
+  const reqRef = doc(db, "shareRequests", requestId);
+  const reqSnap = await getDoc(reqRef);
+  if (!reqSnap.exists()) throw new Error("Request not found");
+  
+  const reqData = reqSnap.data();
+  if (reqData.status !== 'Pending') throw new Error("Request is already processed");
+  
+  await updateDoc(reqRef, {
+    status: 'Rejected',
+    rejectedBy: adminId,
+    rejectedAt: new Date().toISOString(),
+    rejectionReason: reason || 'N/A'
+  });
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+  const notifRef = doc(db, "notifications", notificationId);
+  await updateDoc(notifRef, { read: true });
+};
+
+export const markAllNotificationsAsRead = async () => {
+  const querySnapshot = await getDocs(
+    query(collection(db, "notifications"), where("read", "==", false))
+  );
+  const batchPromises = [];
+  querySnapshot.forEach((docSnap) => {
+    batchPromises.push(updateDoc(doc(db, "notifications", docSnap.id), { read: true }));
+  });
+  await Promise.all(batchPromises);
 };
 
 

@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getInvestors, awardFreeShareRecord } from '../db';
+import Link from 'next/link';
+import { getInvestors, awardFreeShareRecord } from '../../src/db';
 import { Trophy, Gift } from 'lucide-react';
 
 const Referrals = () => {
@@ -50,12 +52,11 @@ const Referrals = () => {
     loadRanking();
   }, []);
 
-
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <h1 className="page-title" style={{ margin: 0 }}>Referral Ranking</h1>
-        <Link to="/free-shares" className="btn btn-primary" style={{ backgroundColor: 'var(--color-warning)', color: '#000', borderColor: 'var(--color-warning)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <Link href="/free-shares" className="btn btn-primary" style={{ backgroundColor: 'var(--color-warning)', color: '#000', borderColor: 'var(--color-warning)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           <Gift size={16} /> Free Share Profits
         </Link>
       </div>

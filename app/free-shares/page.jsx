@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getFreeShares, getFreeSharePayments, getPnlRecords, saveFreeSharePayment, deductFund } from '../db';
+import { useRouter } from 'next/navigation';
+import { getFreeShares, getFreeSharePayments, getPnlRecords, saveFreeSharePayment, deductFund } from '../../src/db';
 import { ArrowLeft, Gift, Coins, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 
 const MONTHS = [
@@ -9,7 +11,7 @@ const MONTHS = [
 ];
 
 const FreeShares = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState(MONTHS[new Date().getMonth()]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
@@ -37,7 +39,8 @@ const FreeShares = () => {
       if (pnlRecord) {
         const netProfit = pnlRecord.revenue - pnlRecord.cost;
         const invShare = netProfit * 0.4;
-        pps = pnlRecord.totalUltraActiveShares > 0 ? (invShare / pnlRecord.totalUltraActiveShares) : 0;
+        const totalSharesCount = pnlRecord.totalActiveShares !== undefined ? pnlRecord.totalActiveShares : (pnlRecord.totalUltraActiveShares || 0);
+        pps = totalSharesCount > 0 ? (invShare / totalSharesCount) : 0;
         setPnlExists(true);
       } else {
         setPnlExists(false);
@@ -73,7 +76,6 @@ const FreeShares = () => {
               name: share.investorName,
               pending: 0,
               active: 0,
-              ultra: 0,
               totalCount: 0
             };
           }
@@ -83,10 +85,8 @@ const FreeShares = () => {
 
           if (diffMonths === 0) {
             grouped[invId].pending += count;
-          } else if (diffMonths === 1) {
-            grouped[invId].active += count;
           } else {
-            grouped[invId].ultra += count;
+            grouped[invId].active += count;
           }
         }
       });
@@ -103,7 +103,7 @@ const FreeShares = () => {
     setActivePayment({
       investorId: investor.investorId,
       name: investor.name,
-      ultraShares: investor.ultra,
+      activeShares: investor.active,
       expectedProfit,
       paid,
       due: expectedProfit - paid
@@ -173,11 +173,10 @@ const FreeShares = () => {
     loadData();
   }, [selectedMonth, selectedYear]);
 
-
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <button className="btn btn-secondary" onClick={() => navigate('/referrals')}>
+        <button className="btn btn-secondary" onClick={() => router.push('/referrals')}>
           <ArrowLeft size={16} style={{ marginRight: '6px' }} /> Back
         </button>
         <h1 className="page-title" style={{ margin: 0 }}>Free Share Profits</h1>
@@ -249,7 +248,7 @@ const FreeShares = () => {
               </tr>
             ) : (
               freeSharesList.map(inv => {
-                const expectedProfit = inv.ultra * profitPerShare;
+                const expectedProfit = inv.active * profitPerShare;
                 const payRecord = paymentsMap[inv.investorId];
                 const paid = payRecord ? payRecord.paidAmount : 0;
                 const due = Math.max(0, expectedProfit - paid);
@@ -270,8 +269,7 @@ const FreeShares = () => {
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>Pending: {inv.pending}</span>
-                        <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>Active: {inv.active}</span>
-                        <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>Ultra Active: {inv.ultra}</span>
+                        <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>Active: {inv.active}</span>
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>৳{expectedProfit.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
@@ -318,7 +316,7 @@ const FreeShares = () => {
 
             <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px' }}>
               <p style={{ margin: '0 0 6px 0', color: 'var(--color-text-white)' }}>Investor: <strong>{activePayment.name} (ID: {activePayment.investorId})</strong></p>
-              <p style={{ margin: '0 0 6px 0' }}>Eligible Free Shares: <strong>{activePayment.ultraShares} Ultra Active</strong></p>
+              <p style={{ margin: '0 0 6px 0' }}>Eligible Free Shares: <strong>{activePayment.activeShares} Active</strong></p>
               <p style={{ margin: '0 0 6px 0' }}>Expected Profit: <strong>৳{activePayment.expectedProfit.toLocaleString()}</strong></p>
               <p style={{ margin: '0 0 6px 0', color: '#10B981' }}>Paid So Far: <strong>৳{activePayment.paid.toLocaleString()}</strong></p>
               <p style={{ margin: '0', color: '#EF4444' }}>Remaining Due: <strong>৳{activePayment.due.toLocaleString()}</strong></p>

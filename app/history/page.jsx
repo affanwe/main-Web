@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getShareTransactions } from '../db';
+import { getShareTransactions } from '../../src/db';
 import { Search, ReceiptText } from 'lucide-react';
 
 const History = () => {
@@ -289,6 +291,7 @@ const History = () => {
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.05em;
+          width: auto;
         }
         .history-table td {
           padding: 16px 20px;

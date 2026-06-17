@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { User, Mail, Shield, Calendar, Phone, Hash } from 'lucide-react';
 
@@ -7,7 +9,6 @@ const Profile = () => {
   useEffect(() => {
     const userStr = localStorage.getItem('woora_user');
     if (userStr) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(userStr));
     }
   }, []);

@@ -1,7 +1,10 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { getInvestors, addInvestor, updateInvestor, getShareStatus } from '../db';
+import { getInvestors, addInvestor, updateInvestor, getShareStatus } from '../../src/db';
+import LocomotiveText from '../../src/components/LocomotiveText';
 import { Plus, Printer, Edit2, X } from 'lucide-react';
-import { sendReceiptEmail } from '../email';
+import { sendReceiptEmail } from '../../src/email';
 
 const getDynamicInvestorStatus = (inv) => {
   if (!inv.investments || inv.investments.length === 0) return inv.status || 'Pending';
@@ -11,23 +14,19 @@ const getDynamicInvestorStatus = (inv) => {
   const currentMonthName = months[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear();
   
-  let hasUltraActive = false;
   let hasActive = false;
   let hasPending = false;
   
   inv.investments.forEach(block => {
     if (block.status === 'Closed') return;
     const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName);
-    if (blockStatus === 'Ultra Active') {
-      hasUltraActive = true;
-    } else if (blockStatus === 'Active') {
+    if (blockStatus === 'Active') {
       hasActive = true;
     } else if (blockStatus === 'Pending') {
       hasPending = true;
     }
   });
   
-  if (hasUltraActive) return 'Ultra Active';
   if (hasActive) return 'Active';
   if (hasPending) return 'Pending';
   return 'Closed';
@@ -79,9 +78,7 @@ const Investors = () => {
       if (editingId) {
         await updateInvestor(editingId, dataToSave);
       } else {
-        const savedInvestor = await addInvestor(dataToSave);
-        // Email receipt is no longer sent here because 0 shares are purchased.
-        // It will be sent from InvestorProfile.jsx when they actually buy shares.
+        await addInvestor(dataToSave);
       }
       
       await loadInvestors();
@@ -168,32 +165,31 @@ const Investors = () => {
     loadInvestors();
   }, []);
 
-
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Investor Management</h1>
-        <button className="btn btn-primary no-print" onClick={() => { setFormData(initialForm); setEditingId(null); setShowModal(true); }}>
-          <Plus size={18} style={{ marginRight: '8px' }} /> Add Investor
+        <h1 className="page-title text-locomotive"><LocomotiveText text="Investor Management" /></h1>
+        <button className="btn btn-primary btn-magnetic no-print" onClick={() => { setFormData(initialForm); setEditingId(null); setShowModal(true); }}>
+          <Plus size={18} style={{ marginRight: '8px' }} /> <LocomotiveText text="Add Investor" />
         </button>
       </div>
 
-      <div className="card no-print" style={{ overflowX: 'auto' }}>
+      <div className="card card-premium no-print" style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>ID</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Name</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Shares</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Amount</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Activation</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Status</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Actions</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="ID" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Name" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Shares" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Amount" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Activation" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Status" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Actions" /></th>
             </tr>
           </thead>
           <tbody>
             {investors.map(inv => (
-              <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+              <tr key={inv.id} className="tr-hover-premium" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>{inv.id}</td>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)', fontWeight: 500 }}>{inv.name} <br/><span style={{fontSize:'12px', color:'var(--color-text-muted)'}}>{inv.mobile}</span></td>
                 <td style={{ padding: '12px 16px' }}>{inv.shares}</td>
@@ -211,8 +207,8 @@ const Investors = () => {
                 </td>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => handleEdit(inv)} className="btn btn-secondary" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
-                    <button onClick={() => handlePrint(inv)} className="btn btn-secondary" style={{ padding: '6px' }} title="Print Receipt"><Printer size={16} /></button>
+                    <button onClick={() => handleEdit(inv)} className="btn btn-secondary btn-magnetic" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
+                    <button onClick={() => handlePrint(inv)} className="btn btn-secondary btn-magnetic" style={{ padding: '6px' }} title="Print Receipt"><Printer size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -252,7 +248,6 @@ const Investors = () => {
               <div><label className="form-label">NID / Birth Cert.</label><input type="text" className="input-field" value={formData.nid} onChange={e => setFormData({...formData, nid: e.target.value})} /></div>
               <div style={{ gridColumn: '1 / -1' }}><label className="form-label">Address</label><input type="text" className="input-field" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
               
-
               <div><label className="form-label">Referred By (ID)</label><input type="text" className="input-field" value={formData.referredBy} onChange={e => setFormData({...formData, referredBy: e.target.value})} /></div>
               <div style={{ gridColumn: '1 / -1' }}><label className="form-label">Note</label><input type="text" className="input-field" value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} /></div>
               
