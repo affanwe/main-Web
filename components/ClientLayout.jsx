@@ -147,48 +147,6 @@ export default function ClientLayout({ children }) {
     }
   }, [mounted, pathname, router]);
 
-  useEffect(() => {
-    if (!mounted) return;
-    const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
-    if (isMobile) return;
-
-    const dot = document.createElement('div');
-    const trail = document.createElement('div');
-    dot.className = 'custom-cursor-dot';
-    trail.className = 'custom-cursor-trail';
-    document.body.appendChild(dot);
-    document.body.appendChild(trail);
-    document.body.classList.add('has-custom-cursor');
-
-    let mouseX = 0;
-    let mouseY = 0;
-
-    const handleMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
-    };
-
-    let trailX = 0;
-    let trailY = 0;
-    const animateTrail = () => {
-      trailX += (mouseX - trailX) * 0.15;
-      trailY += (mouseY - trailY) * 0.15;
-      trail.style.transform = `translate3d(${trailX}px, ${trailY}px, 0)`;
-      requestAnimationFrame(animateTrail);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    const animId = requestAnimationFrame(animateTrail);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animId);
-      if (document.body.contains(dot)) document.body.removeChild(dot);
-      if (document.body.contains(trail)) document.body.removeChild(trail);
-      document.body.classList.remove('has-custom-cursor');
-    };
-  }, [mounted]);
 
   if (!mounted) {
     return (
