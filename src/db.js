@@ -401,21 +401,22 @@ export const getPnlRecords = async () => {
   return (data || []).map(r => ({
     id: r.id, month: r.month, year: r.year,
     revenue: r.revenue, cost: r.cost, netProfit: r.net_profit,
-    investorShare: r.investor_share, companyShare: r.company_share, reserveShare: r.reserve_share,
+    investorShare: r.investor_share, companyShare: r.company_share, reserveShare: r.reserve_share, marketingShare: r.marketing_share || 0,
     totalActiveShares: r.total_active_shares
   }));
 };
 
 export const addPnLRecord = async (record) => {
   const netProfit = record.revenue - record.cost;
-  const investorShare = netProfit * 0.4;
-  const companyShare = netProfit * 0.4;
-  const reserveShare = netProfit * 0.2;
+  const companyShare = netProfit * 0.45;
+  const investorShare = netProfit * 0.25;
+  const reserveShare = netProfit * 0.20;
+  const marketingShare = netProfit * 0.10;
 
   const { error } = await supabase.from('pnl_records').insert({
     month: record.month, year: record.year,
     revenue: record.revenue, cost: record.cost, net_profit: netProfit,
-    investor_share: investorShare, company_share: companyShare, reserve_share: reserveShare,
+    investor_share: investorShare, company_share: companyShare, reserve_share: reserveShare, marketing_share: marketingShare,
     total_active_shares: record.totalActiveShares || 0
   });
   if (error) throw error;
@@ -423,10 +424,11 @@ export const addPnLRecord = async (record) => {
   const { data: funds } = await supabase.from('system_funds').select('*').eq('id', 'main').single();
   await supabase.from('system_funds').update({
     company_fund: (funds?.company_fund || 0) + companyShare,
-    reserve_fund: (funds?.reserve_fund || 0) + reserveShare
+    reserve_fund: (funds?.reserve_fund || 0) + reserveShare,
+    marketing_fund: (funds?.marketing_fund || 0) + marketingShare
   }).eq('id', 'main');
 
-  return { ...record, netProfit, investorShare, companyShare, reserveShare };
+  return { ...record, netProfit, investorShare, companyShare, reserveShare, marketingShare };
 };
 
 // ============ FUNDS ============
@@ -434,11 +436,11 @@ export const addPnLRecord = async (record) => {
 export const getFunds = async () => {
   const { data, error } = await supabase.from('system_funds').select('*').eq('id', 'main').single();
   if (error && error.code === 'PGRST116') {
-    await supabase.from('system_funds').insert({ id: 'main', company_fund: 0, reserve_fund: 0 });
-    return { companyFund: 0, reserveFund: 0 };
+    await supabase.from('system_funds').insert({ id: 'main', company_fund: 0, reserve_fund: 0, marketing_fund: 0 });
+    return { companyFund: 0, reserveFund: 0, marketingFund: 0 };
   }
   if (error) throw error;
-  return { companyFund: data.company_fund, reserveFund: data.reserve_fund };
+  return { companyFund: data.company_fund, reserveFund: data.reserve_fund, marketingFund: data.marketing_fund || 0 };
 };
 
 export const deductFund = async (type, amount, reason, userId) => {
@@ -446,16 +448,17 @@ export const deductFund = async (type, amount, reason, userId) => {
 
   if (type === 'company' && funds.companyFund < amount) throw new Error('Insufficient funds');
   if (type === 'reserve' && funds.reserveFund < amount) throw new Error('Insufficient funds');
+  if (type === 'marketing' && funds.marketingFund < amount) throw new Error('Insufficient funds');
 
   const update = {};
   if (type === 'company') update.company_fund = funds.companyFund - amount;
   if (type === 'reserve') update.reserve_fund = funds.reserveFund - amount;
+  if (type === 'marketing') update.marketing_fund = funds.marketingFund - amount;
 
   await supabase.from('system_funds').update(update).eq('id', 'main');
 
   await supabase.from('fund_transactions').insert({
-    type: 'DEDUCTION', fund: type, amount, reason,
-    date: new Date().toISOString(), user_id: userId || 'N/A'
+    type: `WITHDRAW/${type.toUpperCase()}`, fund: type, amount, reason, user_id: userId, date: new Date().toISOString()
   });
 };
 
@@ -734,13 +737,15 @@ export const approveShareRequest = async (requestId, adminId) => {
   if (!txId) throw new Error("Failed to add shares to investor");
 
   const totalAmount = reqData.amount || 0;
-  const companyShare = totalAmount * 0.4;
-  const reserveShare = totalAmount * 0.2;
+  const companyShare = totalAmount * 0.45;
+  const reserveShare = totalAmount * 0.20;
+  const marketingShare = totalAmount * 0.10;
 
   const funds = await getFunds();
   await supabase.from('system_funds').update({
     company_fund: (funds.companyFund || 0) + companyShare,
-    reserve_fund: (funds.reserveFund || 0) + reserveShare
+    reserve_fund: (funds.reserveFund || 0) + reserveShare,
+    marketing_fund: (funds.marketingFund || 0) + marketingShare
   }).eq('id', 'main');
 
   await supabase.from('share_requests').update({

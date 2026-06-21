@@ -5,7 +5,7 @@ import { getFunds, deductFund, getTransactions } from '../../src/db';
 import { Wallet, ArrowDownCircle } from 'lucide-react';
 
 const Funds = () => {
-  const [funds, setFunds] = useState({ companyFund: 0, reserveFund: 0 });
+  const [funds, setFunds] = useState({ companyFund: 0, reserveFund: 0, marketingFund: 0 });
   const [transactions, setTransactions] = useState([]);
   const [type, setType] = useState('company');
   const [amount, setAmount] = useState(0);
@@ -49,7 +49,7 @@ const Funds = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
         <div className="card" style={{ backgroundColor: 'var(--color-primary)', color: 'white', border: 'none' }}>
-          <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>Company Profit (40%)</h3>
+          <h3 style={{ fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>Company Profit (45%)</h3>
           <h2 style={{ fontSize: '36px', margin: '8px 0' }}>৳{funds.companyFund.toLocaleString()}</h2>
           <p style={{ fontSize: '14px', opacity: 0.8 }}>Available for company expenses and improvements.</p>
         </div>
@@ -58,6 +58,12 @@ const Funds = () => {
           <h3 style={{ color: 'var(--color-warning)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reserve Fund (20%)</h3>
           <h2 style={{ color: 'var(--color-text-white)', fontSize: '36px', margin: '8px 0' }}>৳{funds.reserveFund.toLocaleString()}</h2>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Reserved for losses or emergency situations.</p>
+        </div>
+
+        <div className="card" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid #10B981' }}>
+          <h3 style={{ color: '#10B981', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Extra Marketing (10%)</h3>
+          <h2 style={{ color: 'var(--color-text-white)', fontSize: '36px', margin: '8px 0' }}>৳{funds.marketingFund.toLocaleString()}</h2>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Reserved for promotional and marketing activities.</p>
         </div>
       </div>
 
@@ -74,6 +80,7 @@ const Funds = () => {
               <select className="input-field" value={type} onChange={e => setType(e.target.value)} required>
                 <option value="company">Company Profit</option>
                 <option value="reserve">Reserve Fund</option>
+                <option value="marketing">Marketing Fund</option>
               </select>
             </div>
             <div>

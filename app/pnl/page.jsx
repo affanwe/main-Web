@@ -61,9 +61,10 @@ const PnL = () => {
   };
 
   const netProfit = revenue - cost;
-  const invShare = netProfit * 0.4;
-  const compShare = netProfit * 0.4;
-  const resShare = netProfit * 0.2;
+  const compShare = netProfit * 0.45;
+  const invShare = netProfit * 0.25;
+  const resShare = netProfit * 0.20;
+  const mktShare = netProfit * 0.10;
   const profitPerShare = totalActive > 0 ? (invShare / totalActive) : 0;
 
   useEffect(() => {
@@ -108,9 +109,10 @@ const PnL = () => {
             
             <div style={{ padding: '16px', backgroundColor: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)', marginTop: '8px' }}>
               <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span>Net Profit:</span> <strong style={{ color: netProfit >= 0 ? 'var(--color-success)' : 'var(--color-error)' }}>৳{netProfit.toLocaleString()}</strong></p>
-              <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Company (40%):</span> <span>৳{compShare.toLocaleString()}</span></p>
-              <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Investor (40%):</span> <span>৳{invShare.toLocaleString()}</span></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Company (45%):</span> <span>৳{compShare.toLocaleString()}</span></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Investor (25%):</span> <span>৳{invShare.toLocaleString()}</span></p>
               <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Reserve (20%):</span> <span>৳{resShare.toLocaleString()}</span></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-muted)' }}><span>Marketing (10%):</span> <span>৳{mktShare.toLocaleString()}</span></p>
             </div>
             
             <div style={{ padding: '16px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid var(--color-primary)', marginTop: '8px' }}>

@@ -7,7 +7,7 @@ import { TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ totalInvestors: 0, totalShares: 0, totalInvestment: 0, companyFund: 0, reserveFund: 0, activeShares: 0, pendingShares: 0 });
+  const [stats, setStats] = useState({ totalInvestors: 0, totalShares: 0, totalInvestment: 0, companyFund: 0, reserveFund: 0, marketingFund: 0, activeShares: 0, pendingShares: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +37,7 @@ const Dashboard = () => {
         totalInvestment: investment,
         companyFund: funds ? funds.companyFund : 0,
         reserveFund: funds ? funds.reserveFund : 0,
+        marketingFund: funds ? funds.marketingFund : 0,
         activeShares: active,
         pendingShares: pending
       });
@@ -151,8 +152,8 @@ const Dashboard = () => {
             <p><strong>System Highlights:</strong></p>
             <ul style={{ paddingLeft: '24px', marginTop: '8px' }}>
               <li>Track investors securely with automated date tracking.</li>
-              <li>Distribute 40% of net profits back to investors seamlessly based on their active shares.</li>
-              <li>Maintain 40% for the company fund and a rigorous 20% in reserve.</li>
+              <li>Distribute 25% of net profits back to investors seamlessly based on their active shares.</li>
+              <li>Maintain 45% for the company fund, 20% in reserve, and 10% for extra marketing.</li>
               <li>Automatically handle investor referrals (1 free share per 4 referred investors).</li>
               <li>Review and approve share purchase requests in real-time.</li>
             </ul>
