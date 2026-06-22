@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+scratch
+test-firebase.js
+.env
+.env.local
+.env.production
