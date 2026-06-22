@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy,
   LogOut, Search, Menu, X, UserPlus, History as HistoryIcon,
-  Bell, User, MessageSquare, FileCheck
+  Bell, User, MessageSquare, FileCheck, FolderKanban
 } from 'lucide-react';
 import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
 import { supabase } from '../src/supabase';
@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount }) => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Investors', path: '/investors', icon: Users },
     { name: 'Share Requests', path: '/requests', icon: FileCheck, badge: pendingRequestCount || 0 },
+    { name: 'Projects', path: '/projects', icon: FolderKanban },
     { name: 'Company PnL', path: '/pnl', icon: Calculator },
     { name: 'Funds Details', path: '/funds', icon: Wallet },
     { name: 'Return Investment', path: '/returns', icon: Repeat },

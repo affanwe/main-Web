@@ -1,5 +1,56 @@
 import { supabase } from './supabase';
 
+// ============ PROJECTS ============
+
+export const getProjects = async () => {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
+
+export const createProject = async (project) => {
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(project)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const updateProject = async (id, updates) => {
+  const { error } = await supabase
+    .from('projects')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+};
+
+export const deleteProject = async (id) => {
+  const { error } = await supabase.from('projects').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const uploadProjectImage = async (file) => {
+  const ext = file.name.split('.').pop();
+  const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('project-images')
+    .upload(filename, file, { upsert: false });
+  if (error) throw error;
+  const { data } = supabase.storage.from('project-images').getPublicUrl(filename);
+  return data.publicUrl;
+};
+
+export const deleteProjectImage = async (url) => {
+  const filename = url.split('/project-images/')[1];
+  if (!filename) return;
+  await supabase.storage.from('project-images').remove([filename]);
+};
+
 // ============ SHARE TRANSACTIONS ============
 
 export const logShareTransaction = async (tx) => {
