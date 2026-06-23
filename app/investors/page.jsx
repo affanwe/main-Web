@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getInvestors, addInvestor, updateInvestor, getShareStatus } from '../../src/db';
+import { supabase } from '../../src/supabase';
 import LocomotiveText from '../../src/components/LocomotiveText';
-import { Plus, Printer, Edit2, X } from 'lucide-react';
+import { Plus, Printer, Edit2, X, ShieldCheck, ShieldOff } from 'lucide-react';
 import { sendReceiptEmail } from '../../src/email';
 
 const getDynamicInvestorStatus = (inv) => {
@@ -39,9 +40,10 @@ const Investors = () => {
   
   const initialForm = {
     id: '', name: '', mobile: '', guardianMobile: '', email: '', nid: '', address: '',
-    shares: 0, referredBy: '', note: '', image: ''
+    shares: 0, referredBy: '', note: '', image: '', password: ''
   };
   const [formData, setFormData] = useState(initialForm);
+  const [saving, setSaving] = useState(false);
 
   const loadInvestors = async () => {
     const inv = await getInvestors();
@@ -69,18 +71,30 @@ const Investors = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       const dataToSave = { ...formData };
       if (formData.joiningDate) {
         dataToSave.activationDate = calculateActivationDate(formData.joiningDate);
       }
-      
+
       if (editingId) {
         await updateInvestor(editingId, dataToSave);
       } else {
+        // If password provided, create Supabase Auth user first
+        if (formData.password && formData.email) {
+          const { data: authData, error: authErr } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+          });
+          if (authErr) throw new Error('Login account creation failed: ' + authErr.message);
+          dataToSave.uid = authData?.user?.id || null;
+          // Sign out so admin session is not affected
+          await supabase.auth.signOut();
+        }
         await addInvestor(dataToSave);
       }
-      
+
       await loadInvestors();
       setShowModal(false);
       setEditingId(null);
@@ -89,6 +103,7 @@ const Investors = () => {
       console.error(err);
       alert('Failed to save investor. Error: ' + err.message);
     }
+    setSaving(false);
   };
 
   const handleImageUpload = (e) => {
@@ -184,6 +199,7 @@ const Investors = () => {
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Amount" /></th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Activation" /></th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Status" /></th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Login" /></th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Actions" /></th>
             </tr>
           </thead>
@@ -204,6 +220,12 @@ const Investors = () => {
                       </span>
                     );
                   })()}
+                </td>
+                <td style={{ padding: '12px 16px' }}>
+                  {inv.uid
+                    ? <span title="Has login access" style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}><ShieldCheck size={15} /> Active</span>
+                    : <span title="No login" style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}><ShieldOff size={15} /> None</span>
+                  }
                 </td>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -247,13 +269,34 @@ const Investors = () => {
               <div><label className="form-label">Email</label><input type="email" className="input-field" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
               <div><label className="form-label">NID / Birth Cert.</label><input type="text" className="input-field" value={formData.nid} onChange={e => setFormData({...formData, nid: e.target.value})} /></div>
               <div style={{ gridColumn: '1 / -1' }}><label className="form-label">Address</label><input type="text" className="input-field" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
+
+              {!editingId && (
+                <div style={{ gridColumn: '1 / -1', padding: '16px', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.25)', background: 'rgba(59,130,246,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <ShieldCheck size={16} color="var(--color-primary)" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Login Access (Optional)</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '0 0 12px' }}>
+                    Password set করলে investor তার email + এই password দিয়ে wooragroup.com এ login করতে পারবে।
+                  </p>
+                  <input
+                    type="password"
+                    className="input-field"
+                    placeholder="Password (minimum 6 characters)"
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})}
+                    minLength={formData.password ? 6 : undefined}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              )}
               
               <div><label className="form-label">Referred By (ID)</label><input type="text" className="input-field" value={formData.referredBy} onChange={e => setFormData({...formData, referredBy: e.target.value})} /></div>
               <div style={{ gridColumn: '1 / -1' }}><label className="form-label">Note</label><input type="text" className="input-field" value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} /></div>
               
               <div style={{ gridColumn: '1 / -1', marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Investor</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Investor'}</button>
               </div>
             </form>
           </div>

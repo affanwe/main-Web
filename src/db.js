@@ -237,6 +237,7 @@ export const addInvestor = async (investor) => {
 
   const { error } = await supabase.from('investors').insert({
     id: investor.id.toString(),
+    uid: investor.uid || null,
     name: investor.name,
     email: investor.email,
     mobile: investor.mobile,
