@@ -270,7 +270,8 @@ export const addInvestor = async (investor) => {
     awarded_free_shares: 0,
     referral_count: 0,
     referred_by: investor.referredBy || null,
-    status: investor.status || 'Pending',
+    status: investor.status || 'Active',
+    is_activated: true,
     note: investor.note,
     joining_date: investor.joiningDate || null,
     activation_date: investor.activationDate || null
