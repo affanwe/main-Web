@@ -132,7 +132,7 @@ export default function ClientLayout({ children }) {
       const { count, error } = await supabase
         .from('investors')
         .select('*', { count: 'exact', head: true })
-        .eq('is_activated', false);
+        .neq('status', 'Active');
       if (!error) setNonActivateCount(count || 0);
     };
 

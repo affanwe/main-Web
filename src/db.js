@@ -6,10 +6,18 @@ export const getUnactivatedInvestors = async () => {
   const { data, error } = await supabase
     .from('investors')
     .select('*')
-    .eq('is_activated', false)
+    .neq('status', 'Active')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];
+};
+
+export const acceptInvestorAsPartner = async (investorId) => {
+  const { error } = await supabase
+    .from('investors')
+    .update({ status: 'Active', is_activated: true, updated_at: new Date().toISOString() })
+    .eq('id', investorId);
+  if (error) throw error;
 };
 
 // ============ PROJECTS ============
@@ -300,7 +308,7 @@ export const addInvestor = async (investor) => {
 };
 
 export const getInvestors = async () => {
-  const { data: rows, error } = await supabase.from('investors').select('*').order('id');
+  const { data: rows, error } = await supabase.from('investors').select('*').eq('status', 'Active').order('id');
   if (error) throw error;
 
   const result = [];
