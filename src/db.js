@@ -1,5 +1,17 @@
 import { supabase } from './supabase';
 
+// ============ NON-ACTIVATED INVESTORS ============
+
+export const getUnactivatedInvestors = async () => {
+  const { data, error } = await supabase
+    .from('investors')
+    .select('*')
+    .eq('is_activated', false)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
+
 // ============ PROJECTS ============
 
 export const getProjects = async () => {

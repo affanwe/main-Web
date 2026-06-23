@@ -6,17 +6,18 @@ import Link from 'next/link';
 import {
   Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy,
   LogOut, Search, Menu, X, UserPlus, History as HistoryIcon,
-  Bell, User, MessageSquare, FileCheck, FolderKanban
+  Bell, User, MessageSquare, FileCheck, FolderKanban, UserX
 } from 'lucide-react';
 import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
 import { supabase } from '../src/supabase';
 import LocomotiveText from '../src/components/LocomotiveText';
 
-const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount }) => {
+const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount, nonActivateCount }) => {
   const pathname = usePathname();
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Investors', path: '/investors', icon: Users },
+    { name: 'Non-Activate', path: '/non-activate', icon: UserX, badge: nonActivateCount || 0 },
     { name: 'Share Requests', path: '/requests', icon: FileCheck, badge: pendingRequestCount || 0 },
     { name: 'Projects', path: '/projects', icon: FolderKanban },
     { name: 'Company PnL', path: '/pnl', icon: Calculator },
@@ -99,6 +100,7 @@ export default function ClientLayout({ children }) {
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [processingRequest, setProcessingRequest] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [nonActivateCount, setNonActivateCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -125,7 +127,17 @@ export default function ClientLayout({ children }) {
         .eq('status', 'Pending');
       if (!error) setPendingRequestCount(count || 0);
     };
+
+    const fetchNonActivated = async () => {
+      const { count, error } = await supabase
+        .from('investors')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_activated', false);
+      if (!error) setNonActivateCount(count || 0);
+    };
+
     fetchPending();
+    fetchNonActivated();
 
     const channel = supabase
       .channel('admin-share-requests')
@@ -134,7 +146,17 @@ export default function ClientLayout({ children }) {
       }, () => fetchPending())
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    const channelInv = supabase
+      .channel('admin-investors-activation')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'investors'
+      }, () => fetchNonActivated())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(channelInv);
+    };
   }, [mounted]);
 
   useEffect(() => {
@@ -190,7 +212,7 @@ export default function ClientLayout({ children }) {
 
   return (
     <div className="app-container">
-      <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} user={user} pendingRequestCount={pendingRequestCount} />
+      <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} user={user} pendingRequestCount={pendingRequestCount} nonActivateCount={nonActivateCount} />
       
       <main className={`main-content ${!sidebarOpen ? 'expanded' : ''}`}>
         <header className="topbar no-print">
