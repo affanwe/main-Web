@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getShareRequests, approveShareRequest, rejectShareRequest } from '../../src/db';
+import { getShareRequests, approveShareRequest, rejectShareRequest, getInvestors } from '../../src/db';
+import { sendReceiptEmail } from '../../src/email';
 import LocomotiveText from '../../src/components/LocomotiveText';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
@@ -36,7 +37,31 @@ const Requests = () => {
 
     setProcessingId(req.id);
     try {
-      await approveShareRequest(req.id, user?.id || 'System');
+      const txId = await approveShareRequest(req.id, user?.id || 'System');
+
+      // Send confirmation email to investor
+      try {
+        const allInvestors = await getInvestors();
+        const investor = allInvestors.find(i => i.id?.toString() === req.investorId?.toString());
+        if (investor?.email) {
+          sendReceiptEmail({
+            to_email: investor.email,
+            to_name: req.investorName,
+            shares_count: req.sharesCount,
+            amount: req.amount || req.sharesCount * 500,
+            joining_date: req.dateRequested ? new Date(req.dateRequested).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            trx_id: txId || req.trxId || 'N/A',
+            type: 'BUY',
+            receipt_title: 'Thank You!',
+            receipt_subtitle: 'Thank you for purchasing shares of Woora.',
+            receipt_emoji: '👏',
+            appreciation_text: 'We sincerely appreciate your trust and support in Woora.'
+          }).catch(err => console.error("Failed to send approval email:", err));
+        }
+      } catch (emailErr) {
+        console.error("Email lookup error:", emailErr);
+      }
+
       alert("Request approved! Shares added to investor.");
       await loadRequests();
     } catch (err) {
