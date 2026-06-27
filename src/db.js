@@ -794,6 +794,7 @@ export const getShareRequests = async () => {
     sharesCount: r.shares_count, amount: r.amount,
     paymentMethod: r.payment_method, trxId: r.trx_id,
     status: r.status, rejectReason: r.reject_reason,
+    requestType: r.request_type || 'BUY',
     dateRequested: r.date_requested, dateProcessed: r.date_processed
   }));
 
@@ -834,6 +835,22 @@ export const approveShareRequest = async (requestId, adminId) => {
     reserve_fund: (funds.reserveFund || 0) + reserveShare,
     marketing_fund: (funds.marketingFund || 0) + marketingShare
   }).eq('id', 'main');
+
+  await supabase.from('share_requests').update({
+    status: 'Approved', date_processed: new Date().toISOString()
+  }).eq('id', requestId);
+
+  return txId;
+};
+
+export const approveSellRequest = async (requestId, adminId) => {
+  const { data: reqData, error } = await supabase.from('share_requests').select('*').eq('id', requestId).single();
+  if (error || !reqData) throw new Error("Request not found");
+  if (reqData.status !== 'Pending') throw new Error("Request is already processed");
+
+  const qty = reqData.shares_count;
+  const txId = await sellSharesFromInvestor(reqData.investor_id, qty, adminId);
+  if (!txId) throw new Error("Failed to sell shares");
 
   await supabase.from('share_requests').update({
     status: 'Approved', date_processed: new Date().toISOString()

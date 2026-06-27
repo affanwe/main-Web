@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getShareRequests, approveShareRequest, rejectShareRequest, getInvestors } from '../../src/db';
+import { getShareRequests, approveShareRequest, approveSellRequest, rejectShareRequest, getInvestors } from '../../src/db';
 import { sendReceiptEmail } from '../../src/email';
 import LocomotiveText from '../../src/components/LocomotiveText';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
@@ -33,11 +33,15 @@ const Requests = () => {
   }, []);
 
   const handleApprove = async (req) => {
-    if (!confirm(`Approve ${req.sharesCount} shares for ${req.investorName} (ID: ${req.investorId})?\n\nAmount: ৳${parseInt(req.amount || 0).toLocaleString()}\nPayment: ${req.paymentMethod}\nTrx ID: ${req.trxId || 'N/A'}`)) return;
+    const isSell = req.requestType === 'SELL';
+    const action = isSell ? 'sell' : 'buy';
+    if (!confirm(`Approve ${action.toUpperCase()} request: ${req.sharesCount} shares for ${req.investorName} (ID: ${req.investorId})?\n\nAmount: ৳${parseInt(req.amount || 0).toLocaleString()}${isSell ? '' : `\nPayment: ${req.paymentMethod}\nTrx ID: ${req.trxId || 'N/A'}`}`)) return;
 
     setProcessingId(req.id);
     try {
-      const txId = await approveShareRequest(req.id, user?.id || 'System');
+      const txId = isSell
+        ? await approveSellRequest(req.id, user?.id || 'System')
+        : await approveShareRequest(req.id, user?.id || 'System');
 
       // Send confirmation email to investor
       try {
@@ -51,18 +55,18 @@ const Requests = () => {
             amount: req.amount || req.sharesCount * 500,
             joining_date: req.dateRequested ? new Date(req.dateRequested).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             trx_id: txId || req.trxId || 'N/A',
-            type: 'BUY',
-            receipt_title: 'Thank You!',
-            receipt_subtitle: 'Thank you for purchasing shares of Woora.',
-            receipt_emoji: '👏',
-            appreciation_text: 'We sincerely appreciate your trust and support in Woora.'
+            type: isSell ? 'SELL' : 'BUY',
+            receipt_title: isSell ? 'Shares Sold Successfully' : 'Thank You!',
+            receipt_subtitle: isSell ? `Your ${req.sharesCount} shares of Woora have been sold.` : 'Thank you for purchasing shares of Woora.',
+            receipt_emoji: isSell ? '📋' : '👏',
+            appreciation_text: isSell ? 'Thank you for being a valued member of Woora.' : 'We sincerely appreciate your trust and support in Woora.'
           }).catch(err => console.error("Failed to send approval email:", err));
         }
       } catch (emailErr) {
         console.error("Email lookup error:", emailErr);
       }
 
-      alert("Request approved! Shares added to investor.");
+      alert(`Request approved! Shares ${isSell ? 'sold from' : 'added to'} investor.`);
       await loadRequests();
     } catch (err) {
       alert("Failed to approve: " + err.message);
@@ -125,6 +129,7 @@ const Requests = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+                <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Type" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Investor" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="ID" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Shares" /></th>
@@ -142,6 +147,11 @@ const Requests = () => {
                 const isProcessed = !isPending;
                 return (
                   <tr key={req.id} className="tr-hover-premium" style={{ borderBottom: '1px solid var(--color-border-light)', opacity: isProcessed ? 0.5 : 1 }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ padding: '3px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, backgroundColor: req.requestType === 'SELL' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)', color: req.requestType === 'SELL' ? '#EF4444' : '#10B981' }}>
+                        {req.requestType || 'BUY'}
+                      </span>
+                    </td>
                     <td style={{ padding: '12px 16px', color: 'var(--color-text-white)', fontWeight: 500 }}>{req.investorName}</td>
                     <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>{req.investorId}</td>
                     <td style={{ padding: '12px 16px' }}>{req.sharesCount}</td>
@@ -183,7 +193,7 @@ const Requests = () => {
               })}
               {requests.length === 0 && (
                 <tr>
-                  <td colSpan="9" style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No share requests found.</td>
+                  <td colSpan="10" style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No share requests found.</td>
                 </tr>
               )}
             </tbody>
