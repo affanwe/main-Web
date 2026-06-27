@@ -733,6 +733,23 @@ export const transferShares = async (fromId, toId, blockIndex, qty, authorizedBy
   return { txId, fromName: fromRow.name, toName: toRow.name, toEmail: toRow.email };
 };
 
+// ============ SITE SETTINGS (Generic) ============
+
+export const getSiteSettings = async (key, defaults = {}) => {
+  const { data } = await supabase.from('metadata').select('value').eq('key', key).maybeSingle();
+  if (data?.value) return data.value;
+  return defaults;
+};
+
+export const saveSiteSettings = async (key, value) => {
+  const { data: existing } = await supabase.from('metadata').select('key').eq('key', key).maybeSingle();
+  if (existing) {
+    await supabase.from('metadata').update({ value }).eq('key', key);
+  } else {
+    await supabase.from('metadata').insert({ key, value });
+  }
+};
+
 // ============ EMAILJS SETTINGS ============
 
 export const getEmailJsSettings = async () => {

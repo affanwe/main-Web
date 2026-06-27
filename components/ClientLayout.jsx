@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Users, LayoutDashboard, Calculator, Wallet, Repeat, Trophy,
   LogOut, Search, Menu, X, UserPlus, History as HistoryIcon,
-  Bell, User, MessageSquare, FileCheck, FolderKanban, UserX
+  Bell, User, MessageSquare, FileCheck, FolderKanban, UserX, Globe
 } from 'lucide-react';
 import { getInvestors, approveShareRequest, rejectShareRequest, markNotificationAsRead, markAllNotificationsAsRead } from '../src/db';
 import { supabase } from '../src/supabase';
@@ -28,6 +28,7 @@ const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount, nonActivateCount 
   ];
 
   if (user?.role === 'Founder') {
+    navItems.push({ name: 'Site Settings', path: '/site-settings', icon: Globe });
     navItems.push({ name: 'Team Management', path: '/team', icon: UserPlus });
   }
 
