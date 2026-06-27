@@ -750,23 +750,20 @@ export const saveSiteSettings = async (key, value) => {
   }
 };
 
-// ============ EMAILJS SETTINGS ============
+// ============ BREVO EMAIL SETTINGS ============
 
-export const getEmailJsSettings = async () => {
-  const { data } = await supabase.from('metadata').select('value').eq('key', 'emailjs').maybeSingle();
+export const getBrevoSettings = async () => {
+  const { data } = await supabase.from('metadata').select('value').eq('key', 'brevo').maybeSingle();
   if (data?.value) return data.value;
-  return {
-    publicKey: 'ktSyvmbjRztQFjNhq', serviceId: 'service_zssdwhn',
-    otpTemplateId: 'template_42akj3o', receiptTemplateId: 'template_receipt'
-  };
+  return { apiKey: '' };
 };
 
-export const saveEmailJsSettings = async (settings) => {
-  const { data: existing } = await supabase.from('metadata').select('key').eq('key', 'emailjs').maybeSingle();
+export const saveBrevoSettings = async (settings) => {
+  const { data: existing } = await supabase.from('metadata').select('key').eq('key', 'brevo').maybeSingle();
   if (existing) {
-    await supabase.from('metadata').update({ value: settings }).eq('key', 'emailjs');
+    await supabase.from('metadata').update({ value: settings }).eq('key', 'brevo');
   } else {
-    await supabase.from('metadata').insert({ key: 'emailjs', value: settings });
+    await supabase.from('metadata').insert({ key: 'brevo', value: settings });
   }
 };
 
