@@ -56,13 +56,14 @@ const History = () => {
     if (!dateStr) return 'N/A';
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleString('en-US', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        timeZone: 'Asia/Dhaka'
       });
     } catch (e) {
       return dateStr;
@@ -140,6 +141,7 @@ const History = () => {
                   <th style={{ textAlign: 'right' }}>Shares</th>
                   <th style={{ textAlign: 'right' }}>Total Amount</th>
                   <th>Method</th>
+                  <th>Performed By</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,6 +180,9 @@ const History = () => {
                     </td>
                     <td style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
                       {tx.paymentMethod}
+                    </td>
+                    <td style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                      {tx.userId || '—'}
                     </td>
                   </tr>
                 ))}

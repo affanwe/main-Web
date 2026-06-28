@@ -65,7 +65,9 @@ const InvestorProfile = () => {
         ...newShare,
         activationDate: new Date(new Date(newShare.joiningDate).setMonth(new Date(newShare.joiningDate).getMonth() + 1)).toISOString().split('T')[0]
       };
-      const txId = await addShareToInvestor(investor.id, shareData);
+      const userStr = localStorage.getItem('woora_user');
+      const adminId = userStr ? JSON.parse(userStr).id : 'System';
+      const txId = await addShareToInvestor(investor.id, shareData, adminId);
       
       if (investor.email) {
         sendReceiptEmail({

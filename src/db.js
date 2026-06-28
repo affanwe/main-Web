@@ -123,7 +123,8 @@ export const getShareTransactions = async () => {
     fromInvestorName: row.from_name,
     toInvestorId: row.to_investor_id,
     toInvestorName: row.to_name,
-    date: row.date
+    date: row.date,
+    userId: row.user_id
   }));
 };
 
@@ -383,7 +384,7 @@ export const updateInvestor = async (id, updates) => {
   }
 };
 
-export const addShareToInvestor = async (id, newShare) => {
+export const addShareToInvestor = async (id, newShare, adminUserId) => {
   const shares = parseInt(newShare.shares, 10) || 0;
   const amount = shares * 500;
   const txId = 'BUY' + Math.floor(100000 + Math.random() * 900000).toString();
@@ -417,7 +418,8 @@ export const addShareToInvestor = async (id, newShare) => {
     shares,
     amount,
     paymentMethod: newShare.paymentMethod || 'Cash',
-    date: newShare.joiningDate ? new Date(newShare.joiningDate).toISOString() : new Date().toISOString()
+    userId: adminUserId || null,
+    date: new Date().toISOString()
   });
 
   return txId;
@@ -462,6 +464,7 @@ export const sellSharesFromInvestor = async (id, sharesToSell, editedBy) => {
   await logShareTransaction({
     id: txId, type: 'SELL', investorId: id, investorName: investorRow.name,
     shares: sharesToSell, amount: refundAmount, paymentMethod: 'Refund to Reserve Fund',
+    userId: editedBy || null,
     date: new Date().toISOString()
   });
 
@@ -739,6 +742,7 @@ export const transferShares = async (fromId, toId, blockIndex, qty, authorizedBy
     toInvestorId: toId, toInvestorName: toRow.name,
     investorId: fromId, investorName: fromRow.name,
     shares: qty, amount: transferAmount, paymentMethod: 'Internal Transfer',
+    userId: authorizedBy || null,
     date: new Date().toISOString()
   });
 
