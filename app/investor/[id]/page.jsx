@@ -59,6 +59,7 @@ const InvestorProfile = () => {
 
   const handleAddShare = async (e) => {
     e.preventDefault();
+    if (!confirm(`Confirm: Buy ${newShare.shares} share(s) for ${investor?.name || 'this investor'}?\n\nAmount: ৳${(newShare.shares * 500).toLocaleString()}\nPayment: ${newShare.paymentMethod}\nTrx ID: ${newShare.trxId || 'N/A'}`)) return;
     try {
       const shareData = {
         ...newShare,
