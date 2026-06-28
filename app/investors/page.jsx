@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getInvestors, addInvestor, updateInvestor, getShareStatus } from '../../src/db';
 import { supabase } from '../../src/supabase';
 import LocomotiveText from '../../src/components/LocomotiveText';
@@ -147,6 +147,18 @@ const Investors = () => {
   };
 
   const [printMenuId, setPrintMenuId] = useState(null);
+  const printMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!printMenuId) return;
+    const handleClickOutside = (e) => {
+      if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
+        setPrintMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [printMenuId]);
 
   const handlePrint = (inv) => {
     const status = getDynamicInvestorStatus(inv);
@@ -266,20 +278,16 @@ const Investors = () => {
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
                     <button onClick={() => handleEdit(inv)} className="btn btn-secondary btn-magnetic" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
-                    <div style={{ position: 'relative' }}>
-                      <button onClick={() => setPrintMenuId(printMenuId === inv.id ? null : inv.id)} className="btn btn-secondary btn-magnetic" style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Print / Email">
+                    <div style={{ position: 'relative' }} ref={printMenuId === inv.id ? printMenuRef : null}>
+                      <button onClick={(e) => { e.stopPropagation(); setPrintMenuId(printMenuId === inv.id ? null : inv.id); }} className="btn btn-secondary btn-magnetic" style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Print / Email">
                         <Printer size={16} /><ChevronDown size={12} />
                       </button>
                       {printMenuId === inv.id && (
-                        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', zIndex: 100, minWidth: '180px', overflow: 'hidden' }}>
-                          <button onClick={() => handlePrint(inv)} style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left' }}
-                            onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                            onMouseLeave={e => e.target.style.background = 'none'}>
+                        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', zIndex: 1000, minWidth: '180px' }}>
+                          <button onClick={(e) => { e.stopPropagation(); handlePrint(inv); setPrintMenuId(null); }} className="print-menu-item" style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left' }}>
                             <Printer size={14} /> Print PDF
                           </button>
-                          <button onClick={() => handleEmailSummary(inv)} style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left', borderTop: '1px solid var(--color-border)' }}
-                            onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                            onMouseLeave={e => e.target.style.background = 'none'}>
+                          <button onClick={(e) => { e.stopPropagation(); handleEmailSummary(inv); setPrintMenuId(null); }} className="print-menu-item" style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left', borderTop: '1px solid var(--color-border)' }}>
                             <Mail size={14} /> Email Summary
                           </button>
                         </div>
@@ -378,6 +386,7 @@ const Investors = () => {
 
       <style>{`
         .form-label { display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text); }
+        .print-menu-item:hover { background: rgba(255,255,255,0.08) !important; }
       `}</style>
     </div>
   );
