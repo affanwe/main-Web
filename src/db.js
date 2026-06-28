@@ -71,6 +71,18 @@ export const deleteProjectImage = async (url) => {
   await supabase.storage.from('project-images').remove([filename]);
 };
 
+export const uploadProjectVideo = async (file) => {
+  if (file.size > 15 * 1024 * 1024) throw new Error('Video must be under 15MB');
+  const ext = file.name.split('.').pop();
+  const filename = `vid_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('project-images')
+    .upload(filename, file, { upsert: false, contentType: file.type });
+  if (error) throw error;
+  const { data } = supabase.storage.from('project-images').getPublicUrl(filename);
+  return data.publicUrl;
+};
+
 // ============ SHARE TRANSACTIONS ============
 
 export const logShareTransaction = async (tx) => {
