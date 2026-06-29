@@ -59,7 +59,7 @@ const InvestorProfile = () => {
 
   const handleAddShare = async (e) => {
     e.preventDefault();
-    if (!confirm(`Confirm: Buy ${newShare.shares} share(s) for ${investor?.name || 'this investor'}?\n\nAmount: ৳${(newShare.shares * 500).toLocaleString()}\nPayment: ${newShare.paymentMethod}\nTrx ID: ${newShare.trxId || 'N/A'}`)) return;
+    if (!confirm(`Confirm: Buy ${newShare.shares} investment unit(s) for ${investor?.name || 'this investor'}?\n\nAmount: ৳${(newShare.shares * 500).toLocaleString()}\nPayment: ${newShare.paymentMethod}\nTrx ID: ${newShare.trxId || 'N/A'}`)) return;
     try {
       const shareData = {
         ...newShare,
@@ -79,7 +79,7 @@ const InvestorProfile = () => {
           trx_id: txId || 'N/A',
           type: 'BUY',
           receipt_title: 'Thank You!',
-          receipt_subtitle: 'Thank you for purchasing shares of Woora.',
+          receipt_subtitle: 'Thank you for purchasing investment units of Woora.',
           receipt_emoji: '👏',
           appreciation_text: 'We sincerely appreciate your trust and support in Woora.'
         }).catch(err => console.error("Error sending share receipt email:", err));
@@ -102,7 +102,7 @@ const InvestorProfile = () => {
   const openSellModal = () => {
     const totalShares = investor.shares || 0;
     if (totalShares <= 0) {
-      alert('This investor has no shares to sell.');
+      alert('This investor has no investment units to sell.');
       return;
     }
     const userStr = localStorage.getItem('woora_user');
@@ -142,8 +142,8 @@ const InvestorProfile = () => {
           joining_date: new Date().toISOString().split('T')[0],
           trx_id: txId || 'N/A',
           type: 'SELL',
-          receipt_title: 'Shares Sold Successfully',
-          receipt_subtitle: `This receipt confirms that you have sold ${qty} shares of Woora.`,
+          receipt_title: 'Investment Units Sold Successfully',
+          receipt_subtitle: `This receipt confirms that you have sold ${qty} investment unit(s) of Woora.`,
           receipt_emoji: '💸',
           appreciation_text: 'The refund amount has been successfully disbursed. Thank you for being a part of Woora.'
         }).catch(err => console.error("Error sending sell receipt email:", err));
@@ -152,7 +152,7 @@ const InvestorProfile = () => {
       const investors = await getInvestors();
       setInvestor(investors.find(i => i.id.toString() === id.toString()));
       setShowSellModal(false);
-      alert(`✅ ${qty} shares sold successfully! ৳${qty * 500} refunded from Reserve Fund.`);
+      alert(`✅ ${qty} investment unit(s) sold successfully! ৳${qty * 500} refunded from Reserve Fund.`);
     } catch (err) {
       alert('Error: ' + err.message);
     }
@@ -200,7 +200,7 @@ const InvestorProfile = () => {
 
   const openTransferModal = () => {
     if (!investor.investments || investor.investments.length === 0) {
-      alert('This investor has no shares to transfer.');
+      alert('This investor has no investment units to transfer.');
       return;
     }
     const userStr = localStorage.getItem('woora_user');
@@ -263,8 +263,8 @@ const InvestorProfile = () => {
           type: 'TRANSFER',
           transferor_name: investor.name,
           recipient_name: result.toName,
-          receipt_title: 'Shares Transferred',
-          receipt_subtitle: `You have successfully transferred ${qty} shares of Woora to ${result.toName} (ID: ${transferData.toInvestorId.trim()}).`,
+          receipt_title: 'Investment Units Transferred',
+          receipt_subtitle: `You have successfully transferred ${qty} investment unit(s) of Woora to ${result.toName} (ID: ${transferData.toInvestorId.trim()}).`,
           receipt_emoji: '📤',
           appreciation_text: 'Thank you for your active cooperation and trust in Woora.'
         }).catch(err => console.error("Error sending transfer out receipt email:", err));
@@ -281,17 +281,17 @@ const InvestorProfile = () => {
           type: 'TRANSFER',
           transferor_name: result.fromName,
           recipient_name: result.toName,
-          receipt_title: 'Shares Received',
-          receipt_subtitle: `You have successfully received ${qty} shares of Woora transferred from ${result.fromName} (ID: ${investor.id}).`,
+          receipt_title: 'Investment Units Received',
+          receipt_subtitle: `You have successfully received ${qty} investment unit(s) of Woora transferred from ${result.fromName} (ID: ${investor.id}).`,
           receipt_emoji: '📥',
-          appreciation_text: 'Welcome! These shares have been added to your portfolio. We appreciate your support in Woora.'
+          appreciation_text: 'Welcome! These investment units have been added to your portfolio. We appreciate your support in Woora.'
         }).catch(err => console.error("Error sending transfer in receipt email:", err));
       }
 
       const investors = await getInvestors();
       setInvestor(investors.find(i => i.id.toString() === id.toString()));
       setShowTransferModal(false);
-      alert(`✅ ${qty} shares successfully transferred to ${recipientName} (ID: ${transferData.toInvestorId})!`);
+      alert(`✅ ${qty} investment unit(s) successfully transferred to ${recipientName} (ID: ${transferData.toInvestorId})!`);
     } catch (err) {
       alert('Error transferring shares: ' + err.message);
     }
@@ -373,7 +373,7 @@ const InvestorProfile = () => {
             
             <InfoItem icon={<Calendar size={18}/>} label="Joining Date" value={investor.joiningDate || 'N/A'} />
             <InfoItem icon={<Clock size={18}/>} label="Activation Date" value={investor.activationDate || 'N/A'} />
-            <InfoItem icon={<Activity size={18}/>} label="Shares" value={investor.shares} />
+            <InfoItem icon={<Activity size={18}/>} label="Investment Units" value={investor.shares} />
             <InfoItem icon={<CreditCard size={18}/>} label="Amount Invested" value={`৳${(investor.amount || 0).toLocaleString()}`} />
             <InfoItem icon={<CheckCircle size={18}/>} label="Payment Method" value={investor.paymentMethod ? `${investor.paymentMethod} ${investor.trxId ? `(Trx: ${investor.trxId})` : ''}` : 'N/A'} />
             <InfoItem icon={<User size={18}/>} label="Referred By" value={investor.referredBy || 'None'} />
@@ -383,16 +383,16 @@ const InvestorProfile = () => {
         {/* Investments List Section */}
         <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--color-border-light)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ color: 'var(--color-text-white)', fontSize: '18px' }}>Share Purchases</h3>
+            <h3 style={{ color: 'var(--color-text-white)', fontSize: '18px' }}>Investment Unit Purchases</h3>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <button className="btn btn-secondary" style={{ color: 'var(--color-warning)', borderColor: 'var(--color-warning)' }} onClick={openSellModal}>
-                <DollarSign size={16} style={{ marginRight: '6px' }} /> Sell Shares
+                <DollarSign size={16} style={{ marginRight: '6px' }} /> Sell Units
               </button>
               <button className="btn btn-secondary" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }} onClick={openTransferModal}>
-                <Activity size={16} style={{ marginRight: '6px' }} /> Transfer Share
+                <Activity size={16} style={{ marginRight: '6px' }} /> Transfer Unit
               </button>
               <button className="btn btn-primary" onClick={() => setShowAddShare(true)}>
-                <Plus size={16} style={{ marginRight: '6px' }} /> Buy New Share
+                <Plus size={16} style={{ marginRight: '6px' }} /> Buy New Unit
               </button>
             </div>
           </div>
@@ -402,7 +402,7 @@ const InvestorProfile = () => {
               <div key={index} style={{ backgroundColor: 'var(--color-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                   <div>
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Shares</span>
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', display: 'block' }}>Units</span>
                     <strong style={{ color: 'var(--color-text-white)' }}>{invShare.shares} (৳{invShare.amount})</strong>
                   </div>
                   <div>
@@ -433,7 +433,7 @@ const InvestorProfile = () => {
               </div>
             ))}
             {(!investor.investments || investor.investments.length === 0) && (
-              <p style={{ color: 'var(--color-text-muted)' }}>No share history found.</p>
+              <p style={{ color: 'var(--color-text-muted)' }}>No investment unit history found.</p>
             )}
           </div>
         </div>
@@ -451,13 +451,13 @@ const InvestorProfile = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div className="card" style={{ width: '100%', maxWidth: '500px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ color: 'var(--color-text-white)' }}>Buy New Share</h2>
+              <h2 style={{ color: 'var(--color-text-white)' }}>Buy New Unit</h2>
               <button onClick={() => setShowAddShare(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer' }}><X size={24}/></button>
             </div>
             
             <form onSubmit={handleAddShare} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-muted)' }}>Number of Shares</label>
+                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-muted)' }}>Number of Investment Units</label>
                 <input type="number" min="1" className="input-field" value={newShare.shares} onChange={e => setNewShare({...newShare, shares: e.target.value})} required />
               </div>
               <div>
@@ -488,7 +488,7 @@ const InvestorProfile = () => {
               </div>
               <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddShare(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Share</button>
+                <button type="submit" className="btn btn-primary">Save</button>
               </div>
             </form>
           </div>
@@ -505,7 +505,7 @@ const InvestorProfile = () => {
                   <DollarSign size={20} color="#F59E0B" />
                 </div>
                 <div>
-                  <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Sell Shares</h2>
+                  <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Sell Investment Units</h2>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', margin: 0 }}>{investor.name} — ID: {investor.id}</p>
                 </div>
               </div>
@@ -516,7 +516,7 @@ const InvestorProfile = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div style={{ padding: '12px', backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.2)', textAlign: 'center' }}>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Total Shares</p>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Total Units</p>
                     <p style={{ color: '#3B82F6', fontSize: '22px', fontWeight: 'bold', margin: 0 }}>{investor.shares}</p>
                   </div>
                   <div style={{ padding: '12px', backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: '10px', border: '1px solid rgba(16,185,129,0.2)', textAlign: 'center' }}>
@@ -526,7 +526,7 @@ const InvestorProfile = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Shares to Sell <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {sellData.maxShares})</span></label>
+                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Units to Sell <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {sellData.maxShares})</span></label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
                     <button type="button" onClick={() => changeSellQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
                       −
@@ -581,7 +581,7 @@ const InvestorProfile = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[['Shares to Sell', `${sellData.sharesToSell} shares`], ['Refund Amount', `৳${(sellData.sharesToSell * 500).toLocaleString()}`], ['Deducted From', 'Reserve Fund (20%)'], ['Authorized By', sellData.editedBy]].map(([label, value]) => (
+                  {[['Units to Sell', `${sellData.sharesToSell} shares`], ['Refund Amount', `৳${(sellData.sharesToSell * 500).toLocaleString()}`], ['Deducted From', 'Reserve Fund (20%)'], ['Authorized By', sellData.editedBy]].map(([label, value]) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
                       <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>{label}</span>
                       <strong style={{ color: 'var(--color-text-white)', fontSize: '13px' }}>{value}</strong>
@@ -615,7 +615,7 @@ const InvestorProfile = () => {
                   <Activity size={20} color="var(--color-primary)" />
                 </div>
                 <div>
-                  <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Transfer Shares</h2>
+                  <h2 style={{ color: 'var(--color-text-white)', fontSize: '18px', margin: 0 }}>Transfer Investment Units</h2>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', margin: 0 }}>From: {investor.name} — ID: {investor.id}</p>
                 </div>
               </div>
@@ -625,7 +625,7 @@ const InvestorProfile = () => {
             {transferStep === 'input' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Select Share Block to Transfer</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Select Investment Block to Transfer</label>
                   <select
                     className="input-field"
                     value={transferData.blockIndex}
@@ -646,7 +646,7 @@ const InvestorProfile = () => {
                       const status = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
                       return (
                         <option key={idx} value={idx}>
-                          Block {idx + 1}: {block.shares} Shares (Status: {status}, Joined: {block.joiningDate})
+                          Block {idx + 1}: {block.shares} Units (Status: {status}, Joined: {block.joiningDate})
                         </option>
                       );
                     })}
@@ -675,7 +675,7 @@ const InvestorProfile = () => {
                   const maxShares = block ? parseInt(block.shares, 10) : 0;
                   return (
                     <div>
-                      <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Shares to Transfer <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {maxShares})</span></label>
+                      <label style={{ display: 'block', marginBottom: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-white)' }}>Units to Transfer <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(Max: {maxShares})</span></label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden' }}>
                         <button type="button" onClick={() => changeTransferQty(-1)} style={{ width: '48px', height: '48px', background: 'var(--color-bg)', border: 'none', color: 'var(--color-text-white)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           −
@@ -732,7 +732,7 @@ const InvestorProfile = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    ['Shares to Transfer', `${transferData.sharesToTransfer} shares`],
+                    ['Units to Transfer', `${transferData.sharesToTransfer} shares`],
                     ['From Investor', `${investor.name} (ID: ${investor.id})`],
                     ['Recipient Investor', `${recipientName} (ID: ${transferData.toInvestorId})`],
                     ['Original Date', investor.investments[transferData.blockIndex].joiningDate],

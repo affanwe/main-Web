@@ -109,7 +109,7 @@ const Requests = () => {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title text-locomotive"><LocomotiveText text="Share Requests" /></h1>
+        <h1 className="page-title text-locomotive"><LocomotiveText text="Unit Requests" /></h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {pendingCount > 0 && (
             <span style={{ backgroundColor: 'var(--color-primary)', color: '#000', padding: '4px 12px', borderRadius: '12px', fontSize: '13px', fontWeight: 700 }}>
@@ -132,7 +132,7 @@ const Requests = () => {
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Type" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Investor" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="ID" /></th>
-                <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Shares" /></th>
+                <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Units" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Amount" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Payment" /></th>
                 <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Trx ID" /></th>
@@ -193,7 +193,7 @@ const Requests = () => {
               })}
               {requests.length === 0 && (
                 <tr>
-                  <td colSpan="10" style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No share requests found.</td>
+                  <td colSpan="10" style={{ padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No unit requests found.</td>
                 </tr>
               )}
             </tbody>

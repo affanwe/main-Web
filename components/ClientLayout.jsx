@@ -18,7 +18,7 @@ const Sidebar = ({ isOpen, setOpen, user, pendingRequestCount, nonActivateCount 
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Investors', path: '/investors', icon: Users },
     { name: 'Non-Activate', path: '/non-activate', icon: UserX, badge: nonActivateCount || 0 },
-    { name: 'Share Requests', path: '/requests', icon: FileCheck, badge: pendingRequestCount || 0 },
+    { name: 'Unit Requests', path: '/requests', icon: FileCheck, badge: pendingRequestCount || 0 },
     { name: 'Projects', path: '/projects', icon: FolderKanban },
     { name: 'Company PnL', path: '/pnl', icon: Calculator },
     { name: 'Funds Details', path: '/funds', icon: Wallet },
@@ -486,7 +486,7 @@ export default function ClientLayout({ children }) {
                     }}
                     disabled={processingRequest}
                   >
-                    Approve & Add Shares
+                    Approve & Add Units
                   </button>
                 </>
               )}

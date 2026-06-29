@@ -93,11 +93,11 @@ function buildBuyHtml(params) {
   <table style="border-collapse:collapse;border:1px solid #f0ddc6;border-radius:12px;overflow:hidden" border="0" width="100%" cellspacing="0" cellpadding="0">
   <tbody>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#555555;width:55%"><strong style="color:#ef7d00">›</strong> Number of Shares</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#555555;width:55%"><strong style="color:#ef7d00">›</strong> Number of Investment Units</td>
       <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#222222" align="right">${count}</td>
     </tr>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#555555"><strong style="color:#ef7d00">›</strong> Share Price</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#555555"><strong style="color:#ef7d00">›</strong> Unit Price</td>
       <td style="padding:14px 16px;border-bottom:1px solid #f0ddc6;font-size:14px;color:#222222" align="right">৳${sharePrice}</td>
     </tr>
     <tr>
@@ -176,11 +176,11 @@ function buildSellHtml(params) {
   <table style="border-collapse:collapse;border:1px solid #d4dde8;border-radius:12px;overflow:hidden" border="0" width="100%" cellspacing="0" cellpadding="0">
   <tbody>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#555555;width:55%"><strong style="color:#3d5a80">›</strong> Number of Shares</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#555555;width:55%"><strong style="color:#3d5a80">›</strong> Number of Investment Units</td>
       <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#222222" align="right">${count}</td>
     </tr>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#555555"><strong style="color:#3d5a80">›</strong> Share Price</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#555555"><strong style="color:#3d5a80">›</strong> Unit Price</td>
       <td style="padding:14px 16px;border-bottom:1px solid #d4dde8;font-size:14px;color:#222222" align="right">৳${sharePrice}</td>
     </tr>
     <tr>
@@ -269,11 +269,11 @@ function buildTransferHtml(params) {
       <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#222222;font-weight:600" align="right">${recipient_name || to_name}</td>
     </tr>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#555555"><strong style="color:#7c4dff">›</strong> Number of Shares</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#555555"><strong style="color:#7c4dff">›</strong> Number of Investment Units</td>
       <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#222222" align="right">${count}</td>
     </tr>
     <tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#555555"><strong style="color:#7c4dff">›</strong> Share Price</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#555555"><strong style="color:#7c4dff">›</strong> Unit Price</td>
       <td style="padding:14px 16px;border-bottom:1px solid #d9c8f2;font-size:14px;color:#222222" align="right">৳${sharePrice}</td>
     </tr>
     <tr>

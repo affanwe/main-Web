@@ -210,7 +210,7 @@ const Returns = () => {
         {!pnlExists && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px', padding: '12px', backgroundColor: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '8px', color: 'var(--color-warning)' }}>
             <AlertTriangle size={18} />
-            <span style={{ fontSize: '13px' }}>Monthly PnL report not submitted for {selectedMonth} {selectedYear} yet. Dividend per share is ৳0.00.</span>
+            <span style={{ fontSize: '13px' }}>Monthly PnL report not submitted for {selectedMonth} {selectedYear} yet. Dividend per unit is ৳0.00.</span>
           </div>
         )}
       </div>
@@ -221,8 +221,8 @@ const Returns = () => {
             <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>ID</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Name</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Shares Info</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Shares Status Details</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Units Info</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Units Status Details</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Payment (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Paid (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Due (৳)</th>
@@ -277,7 +277,7 @@ const Returns = () => {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: 'var(--color-text-white)', fontWeight: 600 }}>Total: {inv.totalShares} Shares</span>
+                        <span style={{ color: 'var(--color-text-white)', fontWeight: 600 }}>Total: {inv.totalShares} Units</span>
                         <div style={{ display: 'flex', gap: '6px', fontSize: '11px', flexWrap: 'wrap' }}>
                           <span style={{ color: '#F59E0B', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.08)' }}>Active: {inv.activeShares}</span>
                           <span style={{ color: '#EF4444', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)' }}>Pending: {inv.pendingShares}</span>
@@ -312,7 +312,7 @@ const Returns = () => {
                         </button>
                       ) : (
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-                          {paymentStatus === 'N/A' ? 'No active shares yet' : 'Fully Paid'}
+                          {paymentStatus === 'N/A' ? 'No active units yet' : 'Fully Paid'}
                         </span>
                       )}
                     </td>
@@ -336,7 +336,7 @@ const Returns = () => {
 
             <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '13px' }}>
               <p style={{ margin: '0 0 6px 0', color: 'var(--color-text-white)' }}>Investor: <strong>{activePayment.name} (ID: {activePayment.investorId})</strong></p>
-              <p style={{ margin: '0 0 6px 0' }}>Eligible Shares: <strong>{activePayment.activeShares} Active Shares</strong></p>
+              <p style={{ margin: '0 0 6px 0' }}>Eligible Units: <strong>{activePayment.activeShares} Active Units</strong></p>
               <p style={{ margin: '0 0 6px 0' }}>Expected Return Profit: <strong>৳{activePayment.expectedProfit.toLocaleString()}</strong></p>
               <p style={{ margin: '0 0 6px 0', color: '#10B981' }}>Paid So Far: <strong>৳{activePayment.paid.toLocaleString()}</strong></p>
               <p style={{ margin: '0', color: '#EF4444' }}>Remaining Due: <strong>৳{activePayment.due.toLocaleString()}</strong></p>

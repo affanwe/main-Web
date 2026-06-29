@@ -68,7 +68,7 @@ const Dashboard = () => {
             <Activity size={24} />
           </div>
           <div>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Shares Issued</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Investment Units</p>
             <h3 className="text-locomotive" style={{ fontSize: '24px', color: 'var(--color-text-white)', marginTop: '4px' }}><LocomotiveText text={stats.totalShares.toString()} /></h3>
           </div>
         </div>
@@ -97,7 +97,7 @@ const Dashboard = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         <div className="card card-premium">
-          <h3 className="text-locomotive" style={{ color: 'var(--color-text-white)', marginBottom: '16px', fontSize: '18px' }}><LocomotiveText text="Shares Distribution" /></h3>
+          <h3 className="text-locomotive" style={{ color: 'var(--color-text-white)', marginBottom: '16px', fontSize: '18px' }}><LocomotiveText text="Investment Units Distribution" /></h3>
           <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '24px' }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', textTransform: 'uppercase' }}>Active</p>
@@ -139,7 +139,7 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-muted)' }}>No share data available</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-muted)' }}>No investment unit data available</div>
             )}
           </div>
         </div>

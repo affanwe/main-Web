@@ -116,8 +116,8 @@ const PnL = () => {
             </div>
             
             <div style={{ padding: '16px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid var(--color-primary)', marginTop: '8px' }}>
-              <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--color-text-white)' }}><span>Total Active Shares:</span> <strong>{totalActive}</strong></p>
-              <p style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-primary)' }}><span>Dividend Per Share:</span> <strong>৳{profitPerShare.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--color-text-white)' }}><span>Total Active Units:</span> <strong>{totalActive}</strong></p>
+              <p style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-primary)' }}><span>Dividend Per Unit:</span> <strong>৳{profitPerShare.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></p>
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>Save & Distribute</button>

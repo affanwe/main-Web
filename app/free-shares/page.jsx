@@ -229,7 +229,7 @@ const FreeShares = () => {
             <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Investor ID</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Name</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Free Shares (Counts)</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Free Units (Counts)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Expected Profit</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Paid</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Due</th>
@@ -240,11 +240,11 @@ const FreeShares = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading free shares data...</td>
+                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading free investment units data...</td>
               </tr>
             ) : freeSharesList.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No free shares found active in this month.</td>
+                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No free investment units found active in this month.</td>
               </tr>
             ) : (
               freeSharesList.map(inv => {

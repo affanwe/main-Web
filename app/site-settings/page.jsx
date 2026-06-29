@@ -334,7 +334,7 @@ const SiteSettings = () => {
             <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '16px', color: 'rgba(255,255,255,0.8)' }}>Pricing & Stats</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <label style={labelStyle}>Share Price (৳ per unit)</label>
+                <label style={labelStyle}>Unit Price (৳ per unit)</label>
                 <input style={inputStyle} type="number" value={home.sharePrice || 500}
                   onChange={e => setHome({ ...home, sharePrice: Number(e.target.value) })} />
               </div>
@@ -352,7 +352,7 @@ const SiteSettings = () => {
               <div key={idx} style={{ display: 'flex', gap: '12px', marginBottom: '10px', alignItems: 'center' }}>
                 <input style={{ ...inputStyle, flex: '1' }} placeholder="Tier Name" value={tier.name}
                   onChange={e => { const t = [...home.tiers]; t[idx] = { ...t[idx], name: e.target.value }; setHome({ ...home, tiers: t }); }} />
-                <input style={{ ...inputStyle, flex: '1' }} type="number" placeholder="Shares" value={tier.shares}
+                <input style={{ ...inputStyle, flex: '1' }} type="number" placeholder="Units" value={tier.shares}
                   onChange={e => { const t = [...home.tiers]; t[idx] = { ...t[idx], shares: Number(e.target.value) }; setHome({ ...home, tiers: t }); }} />
                 <input style={{ ...inputStyle, flex: '1' }} type="number" placeholder="Cost (৳)" value={tier.cost}
                   onChange={e => { const t = [...home.tiers]; t[idx] = { ...t[idx], cost: Number(e.target.value) }; setHome({ ...home, tiers: t }); }} />

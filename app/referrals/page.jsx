@@ -41,10 +41,10 @@ const Referrals = () => {
   const awardFreeShare = async (referrerId, name, awardedSoFar) => {
     try {
       await awardFreeShareRecord(referrerId, name);
-      alert("Free share awarded successfully!");
+      alert("Free investment unit awarded successfully!");
       await loadRanking();
     } catch (err) {
-      alert("Failed to award free share: " + err.message);
+      alert("Failed to award free investment unit:" + err.message);
     }
   };
 
@@ -57,7 +57,7 @@ const Referrals = () => {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <h1 className="page-title" style={{ margin: 0 }}>Referral Ranking</h1>
         <Link href="/free-shares" className="btn btn-primary" style={{ backgroundColor: 'var(--color-warning)', color: '#000', borderColor: 'var(--color-warning)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-          <Gift size={16} /> Free Share Profits
+          <Gift size={16} /> Free Unit Profits
         </Link>
       </div>
 
@@ -91,11 +91,11 @@ const Referrals = () => {
                   <td style={{ padding: '12px 16px' }}>
                     {canAward ? (
                       <button onClick={() => awardFreeShare(ref.id, ref.name, ref.awarded)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '12px', backgroundColor: 'var(--color-warning)', color: '#000' }}>
-                        <Gift size={14} style={{ marginRight: '6px' }} /> Award Free Share
+                        <Gift size={14} style={{ marginRight: '6px' }} /> Award Free Unit
                       </button>
                     ) : (
                       <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                        {4 - (ref.count % 4)} more for next share
+                        {4 - (ref.count % 4)} more for next unit
                       </span>
                     )}
                   </td>

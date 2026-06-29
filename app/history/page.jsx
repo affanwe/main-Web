@@ -87,7 +87,7 @@ const History = () => {
     <div className="history-container">
       <div className="history-header">
         <h1 className="history-title">Transaction History</h1>
-        <p className="history-subtitle">View and audit all share buy, sell, and transfer transactions.</p>
+        <p className="history-subtitle">View and audit all investment unit buy, sell, and transfer transactions.</p>
       </div>
 
       {/* Toolbar containing filter buttons & search bar */}
@@ -138,7 +138,7 @@ const History = () => {
                   <th>Date</th>
                   <th>Type</th>
                   <th>Investor Details</th>
-                  <th style={{ textAlign: 'right' }}>Shares</th>
+                  <th style={{ textAlign: 'right' }}>Units</th>
                   <th style={{ textAlign: 'right' }}>Total Amount</th>
                   <th>Method</th>
                   <th>Performed By</th>
