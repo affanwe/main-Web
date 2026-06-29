@@ -886,6 +886,30 @@ export const rejectShareRequest = async (requestId, adminId, reason) => {
   }).eq('id', requestId);
 };
 
+// ============ AUDIT LOGS ============
+
+export const logAudit = async ({ category, action, section, details }) => {
+  const userStr = typeof window !== 'undefined' ? localStorage.getItem('woora_user') : null;
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  await supabase.from('audit_logs').insert({
+    category,
+    action,
+    section: section || null,
+    admin_id: user?.id || 'unknown',
+    admin_name: user?.name || 'Unknown',
+    details: details || null,
+  });
+};
+
+export const getAuditLogs = async (category) => {
+  const query = supabase.from('audit_logs').select('*').order('created_at', { ascending: false });
+  if (category) query.eq('category', category);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+};
+
 // ============ NOTIFICATIONS (stub) ============
 
 export const markNotificationAsRead = async (notificationId) => {};

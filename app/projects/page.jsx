@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, X, Upload, Image as ImageIcon, FolderKanban, Video, FileWarning } from 'lucide-react';
-import { getProjects, createProject, updateProject, deleteProject, uploadProjectImage, deleteProjectImage, uploadProjectVideo } from '../../src/db';
+import { Plus, Edit2, Trash2, X, Upload, Image as ImageIcon, FolderKanban, Video, FileWarning, History, Loader2 } from 'lucide-react';
+import { getProjects, createProject, updateProject, deleteProject, uploadProjectImage, deleteProjectImage, uploadProjectVideo, logAudit, getAuditLogs } from '../../src/db';
 
 const CATEGORIES = ['Real Estate', 'Agriculture', 'Technology', 'Infrastructure', 'Manufacturing', 'Renewable Energy', 'Food & Beverage', 'General'];
 const STATUSES = ['Running', 'Coming Soon', 'Planning'];
@@ -40,6 +40,9 @@ export default function ProjectsPage() {
   const [uploadingSection, setUploadingSection] = useState(null);
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const fileRef = useRef();
   const sectionFileRefs = useRef({});
 
@@ -106,6 +109,15 @@ export default function ProjectsPage() {
     setForm(prev => ({ ...prev, [mediaField]: '' }));
   };
 
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const logs = await getAuditLogs('projects');
+      setHistoryLogs(logs);
+    } catch (e) { console.error('Failed to load history', e); }
+    setHistoryLoading(false);
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { alert('Project name is required.'); return; }
     if (!form.category) { alert('Please select a category.'); return; }
@@ -120,20 +132,26 @@ export default function ProjectsPage() {
         section4_desc: form.section4_desc, section4_image: form.section4_image,
         section5_desc: form.section5_desc, section5_image: form.section5_image,
       };
-      if (editingId) { await updateProject(editingId, payload); }
-      else { await createProject(payload); }
+      if (editingId) {
+        await updateProject(editingId, payload);
+        await logAudit({ category: 'projects', action: 'update', section: form.name.trim() });
+      } else {
+        await createProject(payload);
+        await logAudit({ category: 'projects', action: 'create', section: form.name.trim() });
+      }
       await load();
       setShowModal(false);
     } catch (e) { alert('Save failed: ' + e.message); }
     setSaving(false);
   };
 
-  const handleDelete = async (id, images) => {
+  const handleDelete = async (id, images, projectName) => {
     if (!confirm('Delete this project? This cannot be undone.')) return;
     setDeleting(id);
     try {
       await Promise.all((images || []).map(url => deleteProjectImage(url)));
       await deleteProject(id);
+      await logAudit({ category: 'projects', action: 'delete', section: projectName || id });
       await load();
     } catch (e) { alert(e.message); }
     setDeleting(null);
@@ -154,9 +172,22 @@ export default function ProjectsPage() {
             {projects.length} project{projects.length !== 1 ? 's' : ''} total
           </p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-          <Plus size={16} /> Create Project
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => { setShowHistory(true); loadHistory(); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '8px',
+              background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)',
+              color: '#A78BFA', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <History size={15} /> History
+          </button>
+          <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+            <Plus size={16} /> Create Project
+          </button>
+        </div>
       </div>
 
       {/* Project Grid */}
@@ -193,13 +224,77 @@ export default function ProjectsPage() {
                   <button onClick={() => openEdit(p)} className="btn btn-secondary" style={{ flex: 1, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px' }}>
                     <Edit2 size={13} /> Edit
                   </button>
-                  <button onClick={() => handleDelete(p.id, p.images)} disabled={deleting === p.id} style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                  <button onClick={() => handleDelete(p.id, p.images, p.name)} disabled={deleting === p.id} style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.1)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                     {deleting === p.id ? '...' : <Trash2 size={13} />}
                   </button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistory && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={e => e.target === e.currentTarget && setShowHistory(false)}>
+          <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', borderRadius: '14px', padding: '24px', border: '1px solid rgba(139,92,246,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: '#A78BFA' }}>
+                <History size={18} /> Project History
+              </h2>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            {historyLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.5)' }}>
+                <Loader2 size={24} className="spin" /> Loading history...
+              </div>
+            ) : historyLogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)' }}>
+                No changes recorded yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {historyLogs.map(log => {
+                  const actionColors = {
+                    create: { bg: 'rgba(16,185,129,0.15)', color: '#10B981' },
+                    update: { bg: 'rgba(59,130,246,0.15)', color: '#60A5FA' },
+                    delete: { bg: 'rgba(239,68,68,0.15)', color: '#EF4444' },
+                  };
+                  const ac = actionColors[log.action] || actionColors.update;
+                  return (
+                    <div key={log.id} style={{
+                      padding: '14px 16px', borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                            {log.section || 'Unknown'}
+                          </span>
+                          <span style={{
+                            marginLeft: '8px', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                            background: ac.bg, color: ac.color,
+                          }}>
+                            {log.action}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
+                          {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}{' '}
+                          {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                        by <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{log.admin_name}</strong>
+                        <span style={{ marginLeft: '6px', color: 'rgba(255,255,255,0.3)' }}>(ID: {log.admin_id})</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -362,6 +457,10 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+      <style jsx>{`
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

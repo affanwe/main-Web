@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getSiteSettings, saveSiteSettings } from '../../src/db';
+import { getSiteSettings, saveSiteSettings, logAudit, getAuditLogs } from '../../src/db';
 import {
   Globe, CreditCard, Building2, Home, FileText, Layout,
-  Save, Plus, Trash2, ToggleLeft, ToggleRight, Loader2
+  Save, Plus, Trash2, ToggleLeft, ToggleRight, Loader2, History, X
 } from 'lucide-react';
 
 const TABS = [
@@ -95,11 +95,22 @@ const cardStyle = {
   borderRadius: '12px', padding: '24px', marginBottom: '20px',
 };
 
+const SECTION_LABELS = {
+  site_payment_methods: 'Payment Methods',
+  site_company_info: 'Company Info',
+  site_content_home: 'Home Page',
+  site_content_about: 'About Page',
+  site_content_footer: 'Footer & Meta',
+};
+
 const SiteSettings = () => {
   const [activeTab, setActiveTab] = useState('payment');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const [paymentMethods, setPaymentMethods] = useState(DEFAULT_PAYMENT_METHODS);
   const [company, setCompany] = useState(DEFAULT_COMPANY);
@@ -134,12 +145,28 @@ const SiteSettings = () => {
     setSaving(true);
     try {
       await saveSiteSettings(key, value);
+      await logAudit({
+        category: 'settings',
+        action: 'update',
+        section: SECTION_LABELS[key] || key,
+      });
       setSaved(key);
       setTimeout(() => setSaved(''), 2000);
     } catch (e) {
       alert('Failed to save: ' + e.message);
     }
     setSaving(false);
+  };
+
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const logs = await getAuditLogs('settings');
+      setHistoryLogs(logs);
+    } catch (e) {
+      console.error('Failed to load history', e);
+    }
+    setHistoryLoading(false);
   };
 
   const SaveButton = ({ settingsKey, value }) => (
@@ -169,16 +196,29 @@ const SiteSettings = () => {
 
   return (
     <div style={{ padding: '0 0 40px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
-          <Globe size={22} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6' }}>
+            <Globe size={22} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Site Settings</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+              Control public website content from here
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Site Settings</h1>
-          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-            Control public website content from here
-          </p>
-        </div>
+        <button
+          onClick={() => { setShowHistory(true); loadHistory(); }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '8px 16px', borderRadius: '8px',
+            background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)',
+            color: '#A78BFA', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          <History size={15} /> History
+        </button>
       </div>
 
       {/* Tabs */}
@@ -515,6 +555,62 @@ const SiteSettings = () => {
           </div>
 
           <SaveButton settingsKey="site_content_footer" value={footer} />
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistory && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={e => e.target === e.currentTarget && setShowHistory(false)}>
+          <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', borderRadius: '14px', padding: '24px', border: '1px solid rgba(139,92,246,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: '#A78BFA' }}>
+                <History size={18} /> Settings Change History
+              </h2>
+              <button onClick={() => setShowHistory(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            {historyLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.5)' }}>
+                <Loader2 size={24} className="spin" /> Loading history...
+              </div>
+            ) : historyLogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)' }}>
+                No changes recorded yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {historyLogs.map(log => (
+                  <div key={log.id} style={{
+                    padding: '14px 16px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                          {log.section || log.action}
+                        </span>
+                        <span style={{
+                          marginLeft: '8px', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                          background: 'rgba(59,130,246,0.15)', color: '#60A5FA',
+                        }}>
+                          {log.action}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
+                        {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}{' '}
+                        {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: '6px', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                      by <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{log.admin_name}</strong>
+                      <span style={{ marginLeft: '6px', color: 'rgba(255,255,255,0.3)' }}>(ID: {log.admin_id})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
