@@ -7,17 +7,33 @@ import {
   Search, RefreshCw, AlertCircle, CreditCard, MapPin
 } from 'lucide-react';
 
+const SEEN_KEY = 'woora_seen_nonactivate';
+
+const getSeenIds = () => {
+  try { return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); } catch { return []; }
+};
+
+const markAsSeen = (id) => {
+  const seen = getSeenIds();
+  if (!seen.includes(id)) {
+    seen.push(id);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+  }
+};
+
 export default function NonActivatePage() {
   const [investors, setInvestors] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState('');
   const [selected, setSelected]   = useState(null);
+  const [seenIds, setSeenIds]     = useState([]);
 
   const load = async () => {
     setLoading(true);
     try {
       const data = await getUnactivatedInvestors();
       setInvestors(data);
+      setSeenIds(getSeenIds());
     } catch (err) {
       console.error(err);
     } finally {
@@ -27,6 +43,8 @@ export default function NonActivatePage() {
 
   useEffect(() => { load(); }, []);
 
+  const unseenCount = investors.filter(inv => !seenIds.includes(inv.id)).length;
+
   const filtered = investors.filter(inv => {
     const q = search.toLowerCase();
     return (
@@ -35,7 +53,25 @@ export default function NonActivatePage() {
       (inv.mobile|| '').toLowerCase().includes(q) ||
       (inv.name  || '').toLowerCase().includes(q)
     );
+  }).sort((a, b) => {
+    const aUnseen = !seenIds.includes(a.id);
+    const bUnseen = !seenIds.includes(b.id);
+    if (aUnseen && !bUnseen) return -1;
+    if (!aUnseen && bUnseen) return 1;
+    return 0;
   });
+
+  const handleSelect = (inv) => {
+    if (selected?.id === inv.id) {
+      setSelected(null);
+      return;
+    }
+    setSelected(inv);
+    if (!seenIds.includes(inv.id)) {
+      markAsSeen(inv.id);
+      setSeenIds(prev => [...prev, inv.id]);
+    }
+  };
 
   return (
     <div style={{ padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
@@ -51,8 +87,13 @@ export default function NonActivatePage() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontSize: '13px', fontWeight: 600, padding: '4px 14px', borderRadius: '20px', border: '1px solid rgba(239,68,68,0.25)' }}>
-            {investors.length} pending
+          {unseenCount > 0 && (
+            <span style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444', fontSize: '13px', fontWeight: 600, padding: '4px 14px', borderRadius: '20px', border: '1px solid rgba(239,68,68,0.25)' }}>
+              {unseenCount} new
+            </span>
+          )}
+          <span style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-muted)', fontSize: '13px', fontWeight: 600, padding: '4px 14px', borderRadius: '20px', border: '1px solid var(--color-border)' }}>
+            {investors.length} total
           </span>
           <button onClick={load} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', fontSize: '13px' }}>
             <RefreshCw size={14} /> Refresh
@@ -103,14 +144,16 @@ export default function NonActivatePage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(inv => (
+                {filtered.map(inv => {
+                  const isSeen = seenIds.includes(inv.id);
+                  return (
                   <tr
                     key={inv.id}
-                    onClick={() => setSelected(selected?.id === inv.id ? null : inv)}
-                    style={{ cursor: 'pointer', background: selected?.id === inv.id ? 'rgba(59,130,246,0.08)' : undefined, transition: 'background 0.15s' }}
+                    onClick={() => handleSelect(inv)}
+                    style={{ cursor: 'pointer', background: selected?.id === inv.id ? 'rgba(59,130,246,0.08)' : undefined, opacity: isSeen ? 0.5 : 1, transition: 'background 0.15s, opacity 0.15s' }}
                   >
                     <td>
-                      <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontFamily: 'monospace' }}>#{inv.id}</span>
+                      <span style={{ fontWeight: isSeen ? 500 : 700, color: 'var(--color-primary)', fontFamily: 'monospace' }}>#{inv.id}</span>
                     </td>
                     <td style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{inv.email || '—'}</td>
                     <td style={{ fontSize: '13px' }}>{inv.mobile || '—'}</td>
@@ -124,7 +167,8 @@ export default function NonActivatePage() {
                       <ChevronRight size={16} color="var(--color-text-muted)" />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}

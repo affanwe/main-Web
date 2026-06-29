@@ -133,11 +133,15 @@ export default function ClientLayout({ children }) {
     };
 
     const fetchNonActivated = async () => {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('investors')
-        .select('*', { count: 'exact', head: true })
+        .select('id')
         .neq('status', 'Active');
-      if (!error) setNonActivateCount(count || 0);
+      if (!error && data) {
+        const seen = JSON.parse(localStorage.getItem('woora_seen_nonactivate') || '[]');
+        const unseenCount = data.filter(inv => !seen.includes(inv.id)).length;
+        setNonActivateCount(unseenCount);
+      }
     };
 
     fetchPending();
