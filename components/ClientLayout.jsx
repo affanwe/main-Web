@@ -174,6 +174,16 @@ export default function ClientLayout({ children }) {
     }
   }, [mounted, pathname, router]);
 
+  useEffect(() => {
+    if (!showSearchResults) return;
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSearchResults]);
 
   if (!mounted) {
     return (
@@ -188,17 +198,6 @@ export default function ClientLayout({ children }) {
   }
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  useEffect(() => {
-    if (!showSearchResults) return;
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowSearchResults(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSearchResults]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
