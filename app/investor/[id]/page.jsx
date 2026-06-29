@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getInvestors, deleteInvestor, addShareToInvestor, sellSharesFromInvestor, getShareStatus, transferShares } from '../../../src/db';
 import { sendReceiptEmail } from '../../../src/email';
-import { User, Phone, Mail, MapPin, CreditCard, Calendar, Activity, CheckCircle, Clock, Trash2, Plus, X, DollarSign } from 'lucide-react';
+import { User, Phone, Mail, MapPin, CreditCard, Calendar, Activity, CheckCircle, Clock, Trash2, Plus, X, DollarSign, Printer } from 'lucide-react';
 
 const getDynamicInvestorStatus = (inv) => {
   if (!inv) return 'Pending';
@@ -297,6 +297,131 @@ const InvestorProfile = () => {
     }
   };
 
+  const handlePrint = () => {
+    const status = getDynamicInvestorStatus(investor);
+    const currentDate = new Date();
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const currentMonthName = months[currentDate.getMonth()];
+    const currentYear = currentDate.getFullYear();
+
+    const investmentRows = (investor.investments || []).map((block, idx) => {
+      const blockStatus = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
+      return `<tr>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-weight:600">${idx + 1}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${block.shares}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right">৳${(block.amount || block.shares * 500).toLocaleString()}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee">${block.joiningDate || 'N/A'}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee">${block.activationDate || 'N/A'}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee">${block.paymentMethod || 'N/A'}${block.trxId ? ` (${block.trxId})` : ''}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center"><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:${blockStatus === 'Active' ? '#dcfce7;color:#166534' : blockStatus === 'Pending' ? '#fef9c3;color:#854d0e' : '#fee2e2;color:#991b1b'}">${blockStatus}</span></td>
+      </tr>`;
+    }).join('');
+
+    const printContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Investment Statement - ${investor.name}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Inter,system-ui,sans-serif;color:#1a1a2e;padding:40px;max-width:900px;margin:0 auto}
+.header{text-align:center;padding-bottom:24px;margin-bottom:32px;border-bottom:3px solid #1a1a2e}
+.logo{font-size:36px;font-weight:800;letter-spacing:4px;color:#1a1a2e}
+.subtitle{font-size:13px;color:#666;margin-top:6px;letter-spacing:1px}
+.doc-title{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.doc-title::before{content:'';display:inline-block;width:4px;height:22px;background:#00D09C;border-radius:2px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 40px;margin-bottom:32px}
+.field{padding:10px 0;border-bottom:1px solid #f0f0f0}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:#999;margin-bottom:3px}
+.value{font-size:14px;font-weight:600;color:#1a1a2e}
+.summary-box{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #00D09C;border-radius:12px;padding:24px;text-align:center;margin:28px 0}
+.summary-big{font-size:32px;font-weight:800;color:#1a1a2e}
+.summary-sub{font-size:13px;color:#666;margin-top:6px}
+table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;border-bottom:2px solid #e2e8f0}
+.sig-row{display:flex;justify-content:space-between;margin-top:80px;padding-top:0}
+.sig-box{text-align:center;width:200px;border-top:1.5px solid #333;padding-top:10px;font-size:11px;color:#888}
+.footer{text-align:center;margin-top:48px;font-size:10px;color:#bbb;border-top:1px solid #eee;padding-top:16px}
+@media print{body{padding:20px}}
+</style></head><body>
+<div class="header">
+  <div class="logo">WOORA GROUP</div>
+  <div class="subtitle">Institutional-Grade Investment Platform</div>
+</div>
+
+<div class="doc-title">Investment Statement</div>
+
+<div class="info-grid">
+  <div class="field"><div class="label">Investor ID</div><div class="value">${investor.id}</div></div>
+  <div class="field"><div class="label">Full Name</div><div class="value">${investor.name || 'N/A'}</div></div>
+  <div class="field"><div class="label">Mobile</div><div class="value">${investor.mobile || 'N/A'}</div></div>
+  <div class="field"><div class="label">Email</div><div class="value">${investor.email || 'N/A'}</div></div>
+  <div class="field"><div class="label">NID / Birth Certificate</div><div class="value">${investor.nid || 'N/A'}</div></div>
+  <div class="field"><div class="label">Address</div><div class="value">${investor.address || 'N/A'}</div></div>
+  <div class="field"><div class="label">Guardian Mobile</div><div class="value">${investor.guardianMobile || 'N/A'}</div></div>
+  <div class="field"><div class="label">Overall Status</div><div class="value">${status}</div></div>
+</div>
+
+<div class="summary-box">
+  <div class="summary-big">${investor.shares} Investment Units — ৳${(investor.amount || 0).toLocaleString()}</div>
+  <div class="summary-sub">Total Investment Units Owned</div>
+</div>
+
+<div class="doc-title" style="font-size:16px;margin-top:36px">Investment Unit Details</div>
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:center">#</th>
+      <th style="text-align:center">Units</th>
+      <th style="text-align:right">Amount</th>
+      <th>Joining Date</th>
+      <th>Activation Date</th>
+      <th>Payment</th>
+      <th style="text-align:center">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${investmentRows || '<tr><td colspan="7" style="padding:20px;text-align:center;color:#999">No investment units found.</td></tr>'}
+  </tbody>
+</table>
+
+<div class="sig-row">
+  <div class="sig-box">Investor Signature</div>
+  <div class="sig-box">Authorized Signature</div>
+</div>
+
+<div class="footer">
+  Generated on ${currentDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} — WOORA Group<br>
+  This is a computer-generated document and does not require a physical signature for internal records.
+</div>
+</body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+  };
+
+  const handleEmailSummary = async () => {
+    if (!investor.email) { alert('This investor has no email address.'); return; }
+    const status = getDynamicInvestorStatus(investor);
+    try {
+      await sendReceiptEmail({
+        to_email: investor.email,
+        to_name: investor.name,
+        shares_count: investor.shares,
+        amount: investor.amount || 0,
+        joining_date: investor.joiningDate || 'N/A',
+        trx_id: 'N/A',
+        type: 'BUY',
+        receipt_title: 'Your Investment Summary',
+        receipt_subtitle: `You currently hold ${investor.shares} investment unit(s) worth ৳${(investor.amount || 0).toLocaleString()} in Woora Group.`,
+        receipt_emoji: '📊',
+        appreciation_text: `Status: ${status}. Thank you for being a valued investor with Woora Group.`
+      });
+      alert('Investment summary email sent to ' + investor.email);
+    } catch (err) {
+      alert('Failed to send email: ' + err.message);
+    }
+  };
+
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this investor? All their data and shares will be permanently removed, and their amount will be deducted from the total.")) {
       try {
@@ -351,9 +476,17 @@ const InvestorProfile = () => {
               })()}
             </div>
           </div>
-          <button onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
-            <Trash2 size={16} style={{ marginRight: '6px' }} /> Delete Profile
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={handlePrint} className="btn btn-secondary" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>
+              <Printer size={16} style={{ marginRight: '6px' }} /> Print
+            </button>
+            <button onClick={handleEmailSummary} className="btn btn-secondary" style={{ color: '#10B981', borderColor: '#10B981' }}>
+              <Mail size={16} style={{ marginRight: '6px' }} /> Email Summary
+            </button>
+            <button onClick={handleDelete} className="btn btn-secondary" style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}>
+              <Trash2 size={16} style={{ marginRight: '6px' }} /> Delete
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>

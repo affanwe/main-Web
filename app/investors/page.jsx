@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getInvestors, addInvestor, updateInvestor, getShareStatus } from '../../src/db';
 import { supabase } from '../../src/supabase';
 import LocomotiveText from '../../src/components/LocomotiveText';
-import { Plus, Printer, Edit2, X, ShieldCheck, ShieldOff, Mail, ChevronDown } from 'lucide-react';
-import { sendReceiptEmail } from '../../src/email';
+import { Plus, X, ShieldCheck, ShieldOff } from 'lucide-react';
 
 const getDynamicInvestorStatus = (inv) => {
   if (!inv.investments || inv.investments.length === 0) return inv.status || 'Pending';
@@ -34,6 +34,7 @@ const getDynamicInvestorStatus = (inv) => {
 };
 
 const Investors = () => {
+  const router = useRouter();
   const [investors, setInvestors] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -140,90 +141,6 @@ const Investors = () => {
     }
   };
 
-  const handleEdit = (inv) => {
-    setFormData(inv);
-    setEditingId(inv.id);
-    setShowModal(true);
-  };
-
-  const [printMenuId, setPrintMenuId] = useState(null);
-  const printMenuRef = useRef(null);
-
-  useEffect(() => {
-    if (!printMenuId) return;
-    const handleClickOutside = (e) => {
-      if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
-        setPrintMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [printMenuId]);
-
-  const handlePrint = (inv) => {
-    const status = getDynamicInvestorStatus(inv);
-    const printContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Investor Profile - ${inv.name}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Inter,sans-serif;color:#1a1a2e;padding:40px}
-.header{text-align:center;border-bottom:3px solid #1a1a2e;padding-bottom:20px;margin-bottom:32px}
-.logo{font-size:32px;font-weight:800;letter-spacing:3px;color:#1a1a2e}.subtitle{font-size:13px;color:#666;margin-top:4px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 40px;margin-bottom:32px}
-.field{padding:8px 0;border-bottom:1px solid #eee}.label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:2px}
-.value{font-size:15px;font-weight:600}.highlight{background:#f0fff8;border:2px solid #00D09C;border-radius:10px;padding:20px;text-align:center;margin:24px 0}
-.highlight .big{font-size:28px;font-weight:800;color:#1a1a2e}.highlight .sub{font-size:13px;color:#666;margin-top:4px}
-.sig-row{display:flex;justify-content:space-between;margin-top:80px}.sig-box{text-align:center;width:200px;border-top:1px solid #333;padding-top:8px;font-size:12px;color:#666}
-.footer{text-align:center;margin-top:40px;font-size:11px;color:#aaa}
-@media print{body{padding:20px}}</style></head><body>
-<div class="header"><div class="logo">WOORA GROUP</div><div class="subtitle">Institutional-Grade Investment Platform</div></div>
-<h2 style="font-size:18px;margin-bottom:24px;color:#1a1a2e">Investor Profile</h2>
-<div class="grid">
-<div class="field"><div class="label">Investor ID</div><div class="value">${inv.id}</div></div>
-<div class="field"><div class="label">Full Name</div><div class="value">${inv.name || 'N/A'}</div></div>
-<div class="field"><div class="label">Mobile</div><div class="value">${inv.mobile || 'N/A'}</div></div>
-<div class="field"><div class="label">Email</div><div class="value">${inv.email || 'N/A'}</div></div>
-<div class="field"><div class="label">NID / Birth Certificate</div><div class="value">${inv.nid || 'N/A'}</div></div>
-<div class="field"><div class="label">Address</div><div class="value">${inv.address || 'N/A'}</div></div>
-<div class="field"><div class="label">Guardian Mobile</div><div class="value">${inv.guardianMobile || 'N/A'}</div></div>
-<div class="field"><div class="label">Status</div><div class="value">${status}</div></div>
-</div>
-<div class="highlight">
-<div class="big">${inv.shares} Units — ৳${(inv.amount || 0).toLocaleString()}</div>
-<div class="sub">Total Investment Units Owned</div>
-</div>
-<div class="sig-row"><div class="sig-box">Investor Signature</div><div class="sig-box">Authorized Signature</div></div>
-<div class="footer">Generated on ${new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} — WOORA Group</div>
-</body></html>`;
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
-    setPrintMenuId(null);
-  };
-
-  const handleEmailSummary = async (inv) => {
-    if (!inv.email) { alert('This investor has no email address.'); return; }
-    const status = getDynamicInvestorStatus(inv);
-    try {
-      await sendReceiptEmail({
-        to_email: inv.email,
-        to_name: inv.name,
-        shares_count: inv.shares,
-        amount: inv.amount || 0,
-        joining_date: inv.joiningDate || 'N/A',
-        trx_id: 'N/A',
-        type: 'BUY',
-        receipt_title: 'Your Investment Summary',
-        receipt_subtitle: `You currently hold ${inv.shares} investment unit(s) worth ৳${(inv.amount || 0).toLocaleString()} in Woora Group.`,
-        receipt_emoji: '📊',
-        appreciation_text: `Status: ${status}. Thank you for being a valued investor with Woora Group.`
-      });
-      alert('Investment summary email sent to ' + inv.email);
-    } catch (err) {
-      alert('Failed to send email: ' + err.message);
-    }
-    setPrintMenuId(null);
-  };
-
   useEffect(() => {
     loadInvestors();
   }, []);
@@ -248,12 +165,11 @@ const Investors = () => {
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Activation" /></th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Status" /></th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Login" /></th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}><LocomotiveText text="Actions" /></th>
             </tr>
           </thead>
           <tbody>
             {investors.map(inv => (
-              <tr key={inv.id} className="tr-hover-premium" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+              <tr key={inv.id} className="tr-hover-premium" onClick={() => router.push(`/investor/${inv.id}`)} style={{ borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer' }}>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>{inv.id}</td>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)', fontWeight: 500 }}>{inv.name} <br/><span style={{fontSize:'12px', color:'var(--color-text-muted)'}}>{inv.mobile}</span></td>
                 <td style={{ padding: '12px 16px' }}>{inv.shares}</td>
@@ -274,26 +190,6 @@ const Investors = () => {
                     ? <span title="Has login access" style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}><ShieldCheck size={15} /> Active</span>
                     : <span title="No login" style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}><ShieldOff size={15} /> None</span>
                   }
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(inv); }} className="btn btn-secondary" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
-                    <div style={{ position: 'relative' }} ref={printMenuId === inv.id ? printMenuRef : null}>
-                      <button onClick={(e) => { e.stopPropagation(); setPrintMenuId(printMenuId === inv.id ? null : inv.id); }} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Print / Email">
-                        <Printer size={16} /><ChevronDown size={12} />
-                      </button>
-                      {printMenuId === inv.id && (
-                        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '4px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', zIndex: 1000, minWidth: '180px' }}>
-                          <button onClick={(e) => { e.stopPropagation(); handlePrint(inv); setPrintMenuId(null); }} className="print-menu-item" style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left' }}>
-                            <Printer size={14} /> Print PDF
-                          </button>
-                          <button onClick={(e) => { e.stopPropagation(); handleEmailSummary(inv); setPrintMenuId(null); }} className="print-menu-item" style={{ width: '100%', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--color-text-white)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', textAlign: 'left', borderTop: '1px solid var(--color-border)' }}>
-                            <Mail size={14} /> Email Summary
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </td>
               </tr>
             ))}
@@ -386,7 +282,6 @@ const Investors = () => {
 
       <style>{`
         .form-label { display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text); }
-        .print-menu-item:hover { background: rgba(255,255,255,0.08) !important; }
       `}</style>
     </div>
   );
