@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -92,6 +92,9 @@ export default function ClientLayout({ children }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef(null);
   const [user, setUser] = useState(null);
 
   const [notifications, setNotifications] = useState([]);
@@ -186,28 +189,47 @@ export default function ClientLayout({ children }) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  useEffect(() => {
+    if (!showSearchResults) return;
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSearchResults]);
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     const queryStr = searchQuery.trim().toLowerCase();
     const investors = await getInvestors();
-    
-    let found = investors.find(i => i.id.toString().toLowerCase() === queryStr);
-    
-    if (!found) {
-      found = investors.find(i => i.mobile.includes(queryStr));
-    }
-    
-    if (!found) {
-      found = investors.find(i => i.name.toLowerCase().includes(queryStr));
+
+    const exactId = investors.filter(i => i.id.toString().toLowerCase() === queryStr);
+    if (exactId.length === 1) {
+      router.push(`/investor/${exactId[0].id}`);
+      setSearchQuery('');
+      setShowSearchResults(false);
+      return;
     }
 
-    if (found) {
-      router.push(`/investor/${found.id}`);
-      setSearchQuery('');
-    } else {
+    const matches = investors.filter(i =>
+      i.id.toString().toLowerCase().includes(queryStr) ||
+      (i.mobile || '').includes(queryStr) ||
+      (i.name || '').toLowerCase().includes(queryStr)
+    );
+
+    if (matches.length === 0) {
       alert("No investor found matching your search.");
+    } else if (matches.length === 1) {
+      router.push(`/investor/${matches[0].id}`);
+      setSearchQuery('');
+      setShowSearchResults(false);
+    } else {
+      setSearchResults(matches);
+      setShowSearchResults(true);
     }
   };
 
@@ -221,16 +243,35 @@ export default function ClientLayout({ children }) {
             <Menu size={24} />
           </button>
           
-          <div className="search-bar">
+          <div className="search-bar" ref={searchRef} style={{ position: 'relative' }}>
             <Search size={20} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search ID, Name, Mobile..." 
+            <input
+              type="text"
+              placeholder="Search ID, Name, Mobile..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
               className="input-field"
             />
+            {showSearchResults && searchResults.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: 'var(--color-surface, #1a1a2e)', border: '1px solid var(--color-border, #333)', borderRadius: '10px', boxShadow: '0 12px 32px rgba(0,0,0,0.5)', zIndex: 9999, maxHeight: '300px', overflowY: 'auto' }}>
+                <div style={{ padding: '8px 12px', fontSize: '11px', color: 'var(--color-text-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--color-border, #333)' }}>
+                  {searchResults.length} investor{searchResults.length > 1 ? 's' : ''} found
+                </div>
+                {searchResults.map(inv => (
+                  <div key={inv.id} onClick={() => { router.push(`/investor/${inv.id}`); setSearchQuery(''); setShowSearchResults(false); }}
+                    style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-white, #fff)' }}>{inv.name}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--color-text-muted, #888)' }}>{inv.mobile}</div>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted, #888)', fontFamily: 'monospace' }}>ID: {inv.id}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="notification-wrapper" style={{ position: 'relative', marginLeft: 'auto', marginRight: '16px' }}>

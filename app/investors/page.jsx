@@ -277,9 +277,9 @@ const Investors = () => {
                 </td>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-                    <button onClick={() => handleEdit(inv)} className="btn btn-secondary btn-magnetic" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(inv); }} className="btn btn-secondary" style={{ padding: '6px' }} title="Edit"><Edit2 size={16} /></button>
                     <div style={{ position: 'relative' }} ref={printMenuId === inv.id ? printMenuRef : null}>
-                      <button onClick={(e) => { e.stopPropagation(); setPrintMenuId(printMenuId === inv.id ? null : inv.id); }} className="btn btn-secondary btn-magnetic" style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Print / Email">
+                      <button onClick={(e) => { e.stopPropagation(); setPrintMenuId(printMenuId === inv.id ? null : inv.id); }} className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', gap: '2px' }} title="Print / Email">
                         <Printer size={16} /><ChevronDown size={12} />
                       </button>
                       {printMenuId === inv.id && (
