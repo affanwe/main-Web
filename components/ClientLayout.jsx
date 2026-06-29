@@ -168,6 +168,21 @@ export default function ClientLayout({ children }) {
   }, [mounted]);
 
   useEffect(() => {
+    if (!mounted) return;
+    const refreshNonActivateCount = async () => {
+      const { data, error } = await supabase
+        .from('investors')
+        .select('id')
+        .neq('status', 'Active');
+      if (!error && data) {
+        const seen = JSON.parse(localStorage.getItem('woora_seen_nonactivate') || '[]');
+        setNonActivateCount(data.filter(inv => !seen.includes(inv.id)).length);
+      }
+    };
+    refreshNonActivateCount();
+  }, [mounted, pathname]);
+
+  useEffect(() => {
     if (mounted) {
       const isAuth = localStorage.getItem('woora_logged_in') === 'true';
       if (!isAuth && pathname !== '/login') {
