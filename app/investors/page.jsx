@@ -58,17 +58,16 @@ const Investors = () => {
     return d.toISOString().split('T')[0];
   };
 
-  const getNextId = () => {
-    let maxId = 1000;
-    investors.forEach(inv => {
-      let numStr = (inv.id || '').toString().replace(/\D/g, '');
-      let num = parseInt(numStr, 10);
-      if (!isNaN(num) && num > maxId) {
-        maxId = num;
-      }
-    });
-    return maxId + 1;
-  };
+  const [nextIdFromCounter, setNextIdFromCounter] = useState(null);
+  useEffect(() => {
+    supabase.from('metadata').select('value').eq('key', 'counters').single()
+      .then(({ data }) => {
+        const lastId = data?.value?.lastInvestorId || 1000;
+        setNextIdFromCounter(lastId + 1);
+      });
+  }, [investors]);
+
+  const getNextId = () => nextIdFromCounter || '...';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
