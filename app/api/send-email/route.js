@@ -307,6 +307,41 @@ function buildTransferHtml(params) {
 </body></html>`;
 }
 
+function buildCustomHtml(name, message, subject) {
+  const messageHtml = message.replace(/\n/g, '<br>');
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f7;font-family:'Segoe UI',Roboto,Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;padding:40px 0">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.08)">
+  <tr><td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);padding:36px 40px;text-align:center">
+    <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:3px">WOORA GROUP</h1>
+    <div style="width:50px;height:3px;background:#00D09C;margin:12px auto 0"></div>
+    <p style="margin:10px 0 0;color:rgba(255,255,255,0.7);font-size:12px;letter-spacing:1px">Institutional-Grade Investment Platform</p>
+  </td></tr>
+  <tr><td style="padding:36px 40px">
+    <p style="margin:0 0 6px;color:#888;font-size:14px">Assalamu Alaikum,</p>
+    <h2 style="margin:0 0 24px;color:#1a1a2e;font-size:22px;font-weight:700">${name}</h2>
+    <div style="color:#444;font-size:15px;line-height:1.8">${messageHtml}</div>
+  </td></tr>
+  <tr><td style="padding:0 40px 36px">
+    <div style="text-align:center;margin-top:20px">
+      <a href="https://wooragroup.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#00D09C,#00b386);color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(0,208,156,0.3)">
+        Go to Dashboard →
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="background:#f8f9fb;padding:20px 40px;text-align:center;border-top:1px solid #eee">
+    <p style="margin:0;color:#aaa;font-size:11px">&copy; ${new Date().getFullYear()} Woora Group. All rights reserved.</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -340,6 +375,11 @@ export async function POST(request) {
         subject = 'Woora — Share Transfer Confirmation';
         htmlContent = buildTransferHtml(params);
       }
+    } else if (type === 'custom') {
+      toEmail = params.to_email;
+      toName = params.to_name || 'Investor';
+      subject = params.subject || 'Message from Woora Group';
+      htmlContent = buildCustomHtml(toName, params.message || '', subject);
     } else {
       return Response.json({ error: 'Invalid email type' }, { status: 400 });
     }
