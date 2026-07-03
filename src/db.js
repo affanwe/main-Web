@@ -806,11 +806,12 @@ export const getShareRequests = async () => {
   if (error) throw error;
 
   const list = (data || []).map(r => ({
-    id: r.id, investorId: r.investor_id, investorName: r.investor_name,
+    id: r.id, orderId: r.order_id, investorId: r.investor_id, investorName: r.investor_name,
     sharesCount: r.shares_count, amount: r.amount,
     paymentMethod: r.payment_method, trxId: r.trx_id,
     status: r.status, rejectReason: r.reject_reason,
     requestType: r.request_type || 'BUY',
+    processedBy: r.processed_by,
     dateRequested: r.date_requested, dateProcessed: r.date_processed
   }));
 
@@ -853,7 +854,7 @@ export const approveShareRequest = async (requestId, adminId) => {
   }).eq('id', 'main');
 
   await supabase.from('share_requests').update({
-    status: 'Approved', date_processed: new Date().toISOString()
+    status: 'Approved', date_processed: new Date().toISOString(), processed_by: adminId || 'System'
   }).eq('id', requestId);
 
   return txId;
@@ -869,7 +870,7 @@ export const approveSellRequest = async (requestId, adminId) => {
   if (!txId) throw new Error("Failed to sell shares");
 
   await supabase.from('share_requests').update({
-    status: 'Approved', date_processed: new Date().toISOString()
+    status: 'Approved', date_processed: new Date().toISOString(), processed_by: adminId || 'System'
   }).eq('id', requestId);
 
   return txId;
@@ -882,7 +883,7 @@ export const rejectShareRequest = async (requestId, adminId, reason) => {
 
   await supabase.from('share_requests').update({
     status: 'Rejected', reject_reason: reason || 'N/A',
-    date_processed: new Date().toISOString()
+    date_processed: new Date().toISOString(), processed_by: adminId || 'System'
   }).eq('id', requestId);
 };
 
