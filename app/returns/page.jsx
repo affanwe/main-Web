@@ -63,7 +63,7 @@ const Returns = () => {
             const blockShares = parseInt(block.shares, 10) || 0;
             totalShares += blockShares;
 
-            let status = getShareStatus(block.joiningDate, selectedYear, selectedMonth);
+            let status = getShareStatus(block.joiningDate, selectedYear, selectedMonth, block.status);
 
             if (block.transferDate) {
               const transDate = new Date(block.transferDate);

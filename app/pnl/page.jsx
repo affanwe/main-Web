@@ -31,7 +31,7 @@ const PnL = () => {
       if (inv.investments) {
         inv.investments.forEach(share => {
           if (share.status === 'Closed') return;
-          const blockStatus = getShareStatus(share.joiningDate, parseInt(year, 10), month);
+          const blockStatus = getShareStatus(share.joiningDate, parseInt(year, 10), month, share.status);
           if (blockStatus === 'Active') {
             count += parseInt(share.shares, 10) || 0;
           }

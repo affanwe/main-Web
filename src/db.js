@@ -653,14 +653,17 @@ const mapReturnPayment = (r) => ({
   lastUpdated: r.last_updated
 });
 
-export const getShareStatus = (joiningDateStr, targetYear, targetMonthName) => {
+export const getShareStatus = (joiningDateStr, targetYear, targetMonthName, storedStatus) => {
+  if (storedStatus === 'Closed') return 'Closed';
   if (!joiningDateStr) return 'Pending';
   const joinDate = new Date(joiningDateStr);
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const targetMonthIndex = months.indexOf(targetMonthName);
   if (targetMonthIndex === -1) return 'Pending';
   const diffMonths = (targetYear - joinDate.getFullYear()) * 12 + (targetMonthIndex - joinDate.getMonth());
-  return diffMonths <= 0 ? 'Pending' : 'Active';
+  if (diffMonths > 0) return 'Active';
+  if (diffMonths === 0 && storedStatus === 'Active') return 'Active';
+  return 'Pending';
 };
 
 export const getReturnPayments = async (year, month) => {

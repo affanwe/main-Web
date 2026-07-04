@@ -20,7 +20,7 @@ const getDynamicInvestorStatus = (inv) => {
   
   inv.investments.forEach(block => {
     if (block.status === 'Closed') return;
-    const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName);
+    const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName, block.status);
     if (blockStatus === 'Active') {
       hasActive = true;
     } else if (blockStatus === 'Pending') {
@@ -61,9 +61,12 @@ const InvestorProfile = () => {
     e.preventDefault();
     if (!confirm(`Confirm: Buy ${newShare.shares} investment unit(s) for ${investor?.name || 'this investor'}?\n\nAmount: ৳${(newShare.shares * 500).toLocaleString()}\nPayment: ${newShare.paymentMethod}\nTrx ID: ${newShare.trxId || 'N/A'}`)) return;
     try {
+      const activationDate = newShare.status === 'Active'
+        ? newShare.joiningDate
+        : new Date(new Date(newShare.joiningDate).setMonth(new Date(newShare.joiningDate).getMonth() + 1)).toISOString().split('T')[0];
       const shareData = {
         ...newShare,
-        activationDate: new Date(new Date(newShare.joiningDate).setMonth(new Date(newShare.joiningDate).getMonth() + 1)).toISOString().split('T')[0]
+        activationDate
       };
       const userStr = localStorage.getItem('woora_user');
       const adminId = userStr ? JSON.parse(userStr).id : 'System';
@@ -305,7 +308,7 @@ const InvestorProfile = () => {
     const currentYear = currentDate.getFullYear();
 
     const investmentRows = (investor.investments || []).map((block, idx) => {
-      const blockStatus = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
+      const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName, block.status);
       return `<tr>
         <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-weight:600">${idx + 1}</td>
         <td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${block.shares}</td>
@@ -550,7 +553,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
                       const currentMonthName = months[currentDate.getMonth()];
                       const currentYear = currentDate.getFullYear();
                       
-                      const blockStatus = invShare.status === 'Closed' ? 'Closed' : getShareStatus(invShare.joiningDate, currentYear, currentMonthName);
+                      const blockStatus = getShareStatus(invShare.joiningDate, currentYear, currentMonthName, invShare.status);
                       return (
                         <span className={`badge badge-${blockStatus.toLowerCase().replace(' ', '-')}`}>
                           {blockStatus}
@@ -776,7 +779,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
                       const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
                       const currentMonthName = months[currentDate.getMonth()];
                       const currentYear = currentDate.getFullYear();
-                      const status = block.status === 'Closed' ? 'Closed' : getShareStatus(block.joiningDate, currentYear, currentMonthName);
+                      const status = getShareStatus(block.joiningDate, currentYear, currentMonthName, block.status);
                       return (
                         <option key={idx} value={idx}>
                           Block {idx + 1}: {block.shares} Units (Status: {status}, Joined: {block.joiningDate})

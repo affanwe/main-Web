@@ -20,7 +20,7 @@ const getDynamicInvestorStatus = (inv) => {
   
   inv.investments.forEach(block => {
     if (block.status === 'Closed') return;
-    const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName);
+    const blockStatus = getShareStatus(block.joiningDate, currentYear, currentMonthName, block.status);
     if (blockStatus === 'Active') {
       hasActive = true;
     } else if (blockStatus === 'Pending') {
