@@ -242,7 +242,7 @@ const Returns = () => {
               investorsList.map(inv => {
                 const expectedProfit = inv.activeShares * profitPerShare;
                 const payRecord = paymentsMap[inv.id];
-                const paid = payRecord ? payRecord.paidAmount : 0;
+                const paid = payRecord ? (payRecord.paidAmount || payRecord.amount || 0) : 0;
                 const due = Math.max(0, expectedProfit - paid);
 
                 let paymentStatus = 'Unpaid';
