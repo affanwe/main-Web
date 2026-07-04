@@ -34,7 +34,7 @@ const Returns = () => {
       let pps = 0;
       if (pnlRecord) {
         const netProfit = pnlRecord.revenue - pnlRecord.cost;
-        const invShare = netProfit * 0.4;
+        const invShare = netProfit * 0.25;
         const totalSharesCount = pnlRecord.totalActiveShares !== undefined ? pnlRecord.totalActiveShares : (pnlRecord.totalUltraActiveShares || 0);
         pps = totalSharesCount > 0 ? (invShare / totalSharesCount) : 0;
         setPnlExists(true);
