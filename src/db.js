@@ -646,6 +646,7 @@ const mapReturnPayment = (r) => ({
   activeShares: r.active_shares,
   amount: r.total_amount,
   totalAmount: r.total_amount,
+  paidAmount: r.total_amount,
   status: r.payment_status,
   paymentStatus: r.payment_status,
   paymentMethod: r.payment_method,
