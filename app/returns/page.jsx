@@ -221,8 +221,7 @@ const Returns = () => {
             <tr style={{ borderBottom: '1px solid var(--color-border-light)' }}>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>ID</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Name</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Units Info</th>
-              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Units Status Details</th>
+              <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Active Units</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Payment (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Paid (৳)</th>
               <th style={{ padding: '12px 16px', color: 'var(--color-text-muted)', fontWeight: 600 }}>Due (৳)</th>
@@ -233,11 +232,11 @@ const Returns = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="9" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading investment returns...</td>
+                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading investment returns...</td>
               </tr>
             ) : investorsList.length === 0 ? (
               <tr>
-                <td colSpan="9" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No eligible investors found for this month.</td>
+                <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>No eligible investors found for this month.</td>
               </tr>
             ) : (
               investorsList.map(inv => {
@@ -275,24 +274,7 @@ const Returns = () => {
                       <br/>
                       <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{inv.mobile}</span>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: 'var(--color-text-white)', fontWeight: 600 }}>Total: {inv.totalShares} Units</span>
-                        <div style={{ display: 'flex', gap: '6px', fontSize: '11px', flexWrap: 'wrap' }}>
-                          <span style={{ color: '#F59E0B', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.08)' }}>Active: {inv.activeShares}</span>
-                          <span style={{ color: '#EF4444', padding: '1px 5px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)' }}>Pending: {inv.pendingShares}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                        {inv.blocksInfo.map((b, idx) => (
-                          <div key={idx}>
-                            {b.shares} Sh. → <strong style={{ color: 'var(--color-text-white)' }}>{b.status}</strong>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--color-text-white)', fontWeight: 600 }}>{inv.activeShares}</td>
                     <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>৳{expectedProfit.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                     <td style={{ padding: '12px 16px', color: '#10B981' }}>৳{paid.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                     <td style={{ padding: '12px 16px', color: due > 0 ? '#EF4444' : 'var(--color-text-muted)' }}>৳{due.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>

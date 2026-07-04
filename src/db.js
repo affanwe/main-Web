@@ -612,7 +612,7 @@ export const saveFreeSharePayment = async (payment) => {
     await supabase.from('return_payments').update({
       profit_per_share: payment.profitPerShare,
       active_shares: payment.activeShares,
-      total_amount: payment.amount || payment.totalAmount,
+      total_amount: payment.amount || payment.totalAmount || payment.paidAmount,
       payment_status: payment.paymentStatus || payment.status || 'Pending',
       payment_method: payment.paymentMethod,
       trx_id: payment.trxId,
@@ -626,7 +626,7 @@ export const saveFreeSharePayment = async (payment) => {
       month: payment.month,
       profit_per_share: payment.profitPerShare,
       active_shares: payment.activeShares,
-      total_amount: payment.amount || payment.totalAmount,
+      total_amount: payment.amount || payment.totalAmount || payment.paidAmount,
       payment_status: payment.paymentStatus || payment.status || 'Pending',
       payment_method: payment.paymentMethod,
       trx_id: payment.trxId
