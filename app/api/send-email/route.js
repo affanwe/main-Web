@@ -50,7 +50,7 @@ function buildOtpHtml(toName, otpCode) {
 function buildBuyHtml(params) {
   const { to_name, shares_count, amount, joining_date, trx_id,
     receipt_title = 'Thank You!',
-    receipt_subtitle = 'Thank you for purchasing shares of Woora.',
+    receipt_subtitle = 'Thank you for purchasing investment units of Woora.',
     receipt_emoji = '👏',
     appreciation_text = 'We sincerely appreciate your trust and support in Woora.'
   } = params;
@@ -133,8 +133,8 @@ function buildBuyHtml(params) {
 
 function buildSellHtml(params) {
   const { to_name, shares_count, amount, joining_date, trx_id,
-    receipt_title = 'Shares Sold Successfully',
-    receipt_subtitle = 'Your shares have been sold successfully.',
+    receipt_title = 'Investment Units Sold Successfully',
+    receipt_subtitle = 'Your investment units have been sold successfully.',
     appreciation_text = 'Thank you for being a valued member of Woora.'
   } = params;
   const count = parseInt(shares_count, 10) || 1;
@@ -217,8 +217,8 @@ function buildSellHtml(params) {
 function buildTransferHtml(params) {
   const { to_name, shares_count, amount, joining_date, trx_id,
     transferor_name, recipient_name,
-    receipt_title = 'Shares Transferred',
-    receipt_subtitle = 'Your share transfer has been completed successfully.',
+    receipt_title = 'Investment Units Transferred',
+    receipt_subtitle = 'Your investment unit transfer has been completed successfully.',
     receipt_emoji = '📤',
     appreciation_text = 'Thank you for your active cooperation and trust in Woora.'
   } = params;
@@ -366,13 +366,13 @@ export async function POST(request) {
       const txType = params.tx_type || 'BUY';
 
       if (txType === 'BUY') {
-        subject = 'Woora — Share Purchase Confirmation';
+        subject = 'Woora — Investment Unit Purchase Confirmation';
         htmlContent = buildBuyHtml(params);
       } else if (txType === 'SELL') {
-        subject = 'Woora — Share Sale Confirmation';
+        subject = 'Woora — Investment Unit Sale Confirmation';
         htmlContent = buildSellHtml(params);
       } else {
-        subject = 'Woora — Share Transfer Confirmation';
+        subject = 'Woora — Investment Unit Transfer Confirmation';
         htmlContent = buildTransferHtml(params);
       }
     } else if (type === 'custom') {

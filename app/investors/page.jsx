@@ -81,16 +81,16 @@ const Investors = () => {
       if (editingId) {
         await updateInvestor(editingId, dataToSave);
       } else {
-        // If password provided, create Supabase Auth user first
+        // If password provided, create Supabase Auth user via server API (no email verification needed)
         if (formData.password && formData.email) {
-          const { data: authData, error: authErr } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
+          const res = await fetch('/api/create-auth-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, password: formData.password }),
           });
-          if (authErr) throw new Error('Login account creation failed: ' + authErr.message);
-          dataToSave.uid = authData?.user?.id || null;
-          // Sign out so admin session is not affected
-          await supabase.auth.signOut();
+          const result = await res.json();
+          if (!res.ok) throw new Error('Login account creation failed: ' + (result.error || 'Unknown error'));
+          dataToSave.uid = result.uid;
         }
         await addInvestor(dataToSave);
       }
