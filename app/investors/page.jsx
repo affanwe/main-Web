@@ -172,7 +172,7 @@ const Investors = () => {
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)' }}>{inv.id}</td>
                 <td style={{ padding: '12px 16px', color: 'var(--color-text-white)', fontWeight: 500 }}>{inv.name} <br/><span style={{fontSize:'12px', color:'var(--color-text-muted)'}}>{inv.mobile}</span></td>
                 <td style={{ padding: '12px 16px' }}>{inv.shares}</td>
-                <td style={{ padding: '12px 16px' }}>৳{inv.amount.toLocaleString()}</td>
+                <td style={{ padding: '12px 16px' }}>৳{(inv.amount || 0).toLocaleString()}</td>
                 <td style={{ padding: '12px 16px' }}>{inv.activationDate}</td>
                 <td style={{ padding: '12px 16px' }}>
                   {(() => {

@@ -37,7 +37,7 @@ const Requests = () => {
   const handleApprove = async (req) => {
     const isSell = req.requestType === 'SELL';
     const action = isSell ? 'sell' : 'buy';
-    if (!confirm(`Approve ${action.toUpperCase()} request: ${req.sharesCount} shares for ${req.investorName} (ID: ${req.investorId})?\n\nOrder: ${req.orderId || '—'}\nAmount: ৳${parseInt(req.amount || 0).toLocaleString()}${isSell ? '' : `\nPayment: ${req.paymentMethod}\nTrx ID: ${req.trxId || 'N/A'}`}`)) return;
+    if (!confirm(`Approve ${action.toUpperCase()} request: ${req.sharesCount} investment unit(s) for ${req.investorName} (ID: ${req.investorId})?\n\nOrder: ${req.orderId || '—'}\nAmount: ৳${parseInt(req.amount || 0).toLocaleString()}${isSell ? '' : `\nPayment: ${req.paymentMethod}\nTrx ID: ${req.trxId || 'N/A'}`}`)) return;
 
     setProcessingId(req.id);
     try {
@@ -57,8 +57,8 @@ const Requests = () => {
             joining_date: req.dateRequested ? new Date(req.dateRequested).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             trx_id: txId || req.trxId || 'N/A',
             type: isSell ? 'SELL' : 'BUY',
-            receipt_title: isSell ? 'Shares Sold Successfully' : 'Thank You!',
-            receipt_subtitle: isSell ? `Your ${req.sharesCount} shares of Woora have been sold.` : 'Thank you for purchasing shares of Woora.',
+            receipt_title: isSell ? 'Investment Units Sold Successfully' : 'Thank You!',
+            receipt_subtitle: isSell ? `Your ${req.sharesCount} investment unit(s) of Woora have been sold.` : 'Thank you for purchasing investment units of Woora.',
             receipt_emoji: isSell ? '📋' : '👏',
             appreciation_text: isSell ? 'Thank you for being a valued member of Woora.' : 'We sincerely appreciate your trust and support in Woora.'
           }).catch(err => console.error("Failed to send approval email:", err));
@@ -67,7 +67,7 @@ const Requests = () => {
         console.error("Email lookup error:", emailErr);
       }
 
-      alert(`Request approved! Shares ${isSell ? 'sold from' : 'added to'} investor.`);
+      alert(`Request approved! Investment units ${isSell ? 'sold from' : 'added to'} investor.`);
       await loadRequests();
     } catch (err) {
       alert("Failed to approve: " + err.message);
@@ -306,7 +306,7 @@ const Requests = () => {
           <div className="card" style={{ width: '100%', maxWidth: '440px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }}>
             <h3 style={{ color: 'var(--color-text-white)', marginBottom: '8px' }}>Reject Request</h3>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-              Rejecting {rejectTarget.sharesCount} shares for <strong style={{ color: 'var(--color-text-white)' }}>{rejectTarget.investorName}</strong> (ID: {rejectTarget.investorId})
+              Rejecting {rejectTarget.sharesCount} investment unit(s) for <strong style={{ color: 'var(--color-text-white)' }}>{rejectTarget.investorName}</strong> (ID: {rejectTarget.investorId})
               {rejectTarget.orderId && <><br />Order: <strong style={{ color: 'var(--color-primary)' }}>{rejectTarget.orderId}</strong></>}
             </p>
             <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text)' }}>Reason for Rejection</label>

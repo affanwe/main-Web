@@ -92,7 +92,7 @@ const InvestorProfile = () => {
       setInvestor(investors.find(i => i.id.toString() === id.toString()));
       setShowAddShare(false);
       setNewShare({ ...newShare, shares: 1, trxId: '' });
-      alert("New share added successfully!");
+      alert("New investment unit added successfully!");
     } catch (err) {
       alert("Error adding share: " + err.message);
     }
@@ -128,8 +128,8 @@ const InvestorProfile = () => {
 
   const handleSellShares = async () => {
     const qty = parseInt(sellData.sharesToSell, 10);
-    if (!qty || qty <= 0) { alert('Please enter a valid number of shares.'); return; }
-    if (qty > sellData.maxShares) { alert('Cannot sell more than total shares.'); return; }
+    if (!qty || qty <= 0) { alert('Please enter a valid number of investment units.'); return; }
+    if (qty > sellData.maxShares) { alert('Cannot sell more than total investment units.'); return; }
     try {
       const userStr = localStorage.getItem('woora_user');
       const userObj = userStr ? JSON.parse(userStr) : null;
@@ -185,7 +185,7 @@ const InvestorProfile = () => {
         if (found) {
           if (found.id.toString() === investor.id.toString()) {
             setRecipientName('');
-            setRecipientError('Cannot transfer shares to oneself');
+            setRecipientError('Cannot transfer investment units to oneself');
           } else {
             setRecipientName(found.name);
             setRecipientError('');
@@ -296,7 +296,7 @@ const InvestorProfile = () => {
       setShowTransferModal(false);
       alert(`✅ ${qty} investment unit(s) successfully transferred to ${recipientName} (ID: ${transferData.toInvestorId})!`);
     } catch (err) {
-      alert('Error transferring shares: ' + err.message);
+      alert('Error transferring investment units: ' + err.message);
     }
   };
 
@@ -426,7 +426,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this investor? All their data and shares will be permanently removed, and their amount will be deducted from the total.")) {
+    if (window.confirm("Are you sure you want to delete this investor? All their data and investment units will be permanently removed, and their amount will be deducted from the total.")) {
       try {
         await deleteInvestor(investor.id, investor.amount);
         alert("Investor deleted successfully.");
@@ -698,7 +698,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
                     type="button"
                     style={{ flex: 2, padding: '10px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#F59E0B', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     onClick={() => {
-                      if (sellData.sharesToSell <= 0) { alert('Select at least 1 share.'); return; }
+                      if (sellData.sharesToSell <= 0) { alert('Select at least 1 investment unit.'); return; }
                       setSellStep('confirm');
                     }}
                   >
@@ -710,14 +710,14 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ padding: '20px', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
-                  <h3 style={{ color: '#EF4444', marginBottom: '8px', fontSize: '16px' }}>Confirm Share Sell</h3>
+                  <h3 style={{ color: '#EF4444', marginBottom: '8px', fontSize: '16px' }}>Confirm Investment Unit Sell</h3>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
-                    Are you sure you want to sell <strong style={{ color: 'var(--color-text-white)' }}>{sellData.sharesToSell} shares</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong>?
+                    Are you sure you want to sell <strong style={{ color: 'var(--color-text-white)' }}>{sellData.sharesToSell} investment unit(s)</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong>?
                   </p>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[['Units to Sell', `${sellData.sharesToSell} shares`], ['Refund Amount', `৳${(sellData.sharesToSell * 500).toLocaleString()}`], ['Deducted From', 'Reserve Fund (20%)'], ['Authorized By', sellData.editedBy]].map(([label, value]) => (
+                  {[['Units to Sell', `${sellData.sharesToSell} unit(s)`], ['Refund Amount', `৳${(sellData.sharesToSell * 500).toLocaleString()}`], ['Deducted From', 'Reserve Fund (20%)'], ['Authorized By', sellData.editedBy]].map(([label, value]) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
                       <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>{label}</span>
                       <strong style={{ color: 'var(--color-text-white)', fontSize: '13px' }}>{value}</strong>
@@ -845,7 +845,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
                       const maxShares = block ? parseInt(block.shares, 10) : 0;
                       if (!transferData.toInvestorId.trim()) { alert('Please enter Recipient Investor ID.'); return; }
                       if (recipientError) { alert(recipientError); return; }
-                      if (transferData.sharesToTransfer <= 0 || transferData.sharesToTransfer > maxShares) { alert('Invalid share quantity.'); return; }
+                      if (transferData.sharesToTransfer <= 0 || transferData.sharesToTransfer > maxShares) { alert('Invalid unit quantity.'); return; }
                       setTransferStep('confirm');
                     }}
                   >
@@ -857,9 +857,9 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ padding: '20px', backgroundColor: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px', textAlign: 'center' }}>
                   <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔄</div>
-                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '8px', fontSize: '16px' }}>Confirm Share Transfer</h3>
+                  <h3 style={{ color: 'var(--color-primary)', marginBottom: '8px', fontSize: '16px' }}>Confirm Investment Unit Transfer</h3>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.6 }}>
-                    You are transferring <strong style={{ color: 'var(--color-text-white)' }}>{transferData.sharesToTransfer} shares</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong> to <strong style={{ color: 'var(--color-text-white)' }}>{recipientName} (ID: {transferData.toInvestorId})</strong>.
+                    You are transferring <strong style={{ color: 'var(--color-text-white)' }}>{transferData.sharesToTransfer} investment unit(s)</strong> from <strong style={{ color: 'var(--color-text-white)' }}>{investor.name}</strong> to <strong style={{ color: 'var(--color-text-white)' }}>{recipientName} (ID: {transferData.toInvestorId})</strong>.
                   </p>
                   <p style={{ color: 'var(--color-text-muted)', fontSize: '12px', marginTop: '8px', fontStyle: 'italic' }}>
                     Note: The original joining date and share aging lifecycle progress will be preserved on the recipient's profile.
@@ -868,7 +868,7 @@ thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;tex
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    ['Units to Transfer', `${transferData.sharesToTransfer} shares`],
+                    ['Units to Transfer', `${transferData.sharesToTransfer} unit(s)`],
                     ['From Investor', `${investor.name} (ID: ${investor.id})`],
                     ['Recipient Investor', `${recipientName} (ID: ${transferData.toInvestorId})`],
                     ['Original Date', investor.investments[transferData.blockIndex].joiningDate],
